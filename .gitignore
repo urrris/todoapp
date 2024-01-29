@@ -1,0 +1,21 @@
+# Ignore all compiled Python files
+*.pyc
+
+# Ignore the virtual environment
+venv/
+
+# Ignore enviroment variables
+.env
+
+# Ignore the logs directory
+logs/
+
+# Ignore the staticfiles directory
+static/
+
+# Ignore the media directory
+media/
+
+# Ignore the poetry library files
+*.lock
+*.toml
