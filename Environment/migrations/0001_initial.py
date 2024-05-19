@@ -26,9 +26,8 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='User',
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('username', models.CharField(max_length=50, verbose_name='Псевдоним')),
-                ('email', models.EmailField(max_length=254, verbose_name='E-mail')),
+                ('email', models.EmailField(max_length=254, primary_key=True, serialize=False,  verbose_name='E-mail')),
                 ('password', models.CharField(max_length=50, verbose_name='Пароль')),
                 ('height', models.IntegerField(default=0, verbose_name='Высота фото')),
                 ('width', models.IntegerField(default=0, verbose_name='Ширина фото')),

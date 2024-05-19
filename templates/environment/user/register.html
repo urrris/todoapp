@@ -1,0 +1,63 @@
+{% load static %}
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{% static 'css/normalize.css' %}">
+    <link rel="stylesheet" href="{% static 'css/register.css' %}">
+    <title>Регистрация</title>
+</head>
+
+<body>
+    <main class="main">
+        <div class="main__block">
+            <div class="main__block-decoration">
+                <img src="{% static 'img/register|login/circle.svg' %}" alt="Circle">
+            </div>
+            <div class="main__form-title">
+                <span>Создать аккаунт</span>
+                <span>Уже есть аккаунт? <a href="{% url 'login' %}">Войти</a></span>
+            </div>
+
+            <form class="main__form" method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="main__input-name">
+                    <label for="username">* Введите псевдоним</label>
+                    <input type="text" name="username" id="username" title="Пароль должен содержать не менее 5 символов и использовать буквы английского алфавита.">
+                </div>
+                <div class="main__input-photo">
+                    <label for="photo">Выберите фото</label>
+                    <label class="main__upload-file" for="photo"></label>
+                    <input type="file" name="photo" id="photo" accept=".png, .jpg, .jpeg">
+                </div>
+                <div class="main__input-email">
+                    <label for="email">* Введите адрес электронной почты</label>
+                    <input type="email" name="email" id="email">
+                </div>
+                <div class="main__input-password">
+                    <label for="password">* Введите пароль</label>
+                    <input type="password" name="password" id="password">
+                </div>
+                <div class="main__confirm-password">
+                    <label for="confirm_password">* Подтвердите пароль</label>
+                    <input type="password" name="confirm_password" id="confirm_password">
+                </div>
+                <div class="main__show-password">
+                    <span flag="{{ flag }}">{{ hint }}</span>
+                    <div>
+                        <input type="checkbox" name="show" id="show">
+                        <label for="show">Показать пароль</label>
+                    </div>
+                </div>
+                <input class="main__submit-button" name='submit' type="submit" value="Создать в аккаунт">
+            </form>
+            <div class="main__block-decoration">
+                <img src="{% static 'img/register|login/illustration.svg' %}" alt="Illustration">
+            </div>
+        </div>
+    </main>
+    <script src="{% static 'js/register.js' %}"></script>
+</body>
+
+</html>

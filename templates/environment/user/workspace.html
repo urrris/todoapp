@@ -1,0 +1,23 @@
+{% load static %}
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Вход</title>
+</head>
+
+<body>
+    <main class="main">
+        <h1>Вход в профиль успешно выполнен!</h1>
+        <p>{{ username }}</p>
+        <p>{{ email }}</p>
+        <img src="{{ photo }}">
+        <form method="post">
+            {% csrf_token %}
+            <input type="submit" value="Выйти из аккаунта">
+        </form>
+    </main>
+</body>
+
+</html>

@@ -3,7 +3,7 @@ from django.db import models
 
 class User(models.Model):
     username = models.CharField('Псевдоним', max_length=50)
-    email = models.EmailField('E-mail')
+    email = models.EmailField('E-mail', primary_key=True)
     password = models.CharField('Пароль', max_length=50)
     height = models.IntegerField("Высота фото", default=0)
     width = models.IntegerField("Ширина фото", default=0)
