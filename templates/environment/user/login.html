@@ -32,11 +32,11 @@
                 {% csrf_token %}
                 <div class="main__input-email">
                     <label for="email">* Введите адрес электронной почты</label>
-                    <input type="email" name="email" id="email">
+                    <input type="email" name="email" id="email" value="{{ email }}">
                 </div>
                 <div class="main__input-password">
                     <label for="password">* Введите пароль</label>
-                    <input type="password" name="password" id="password">
+                    <input type="password" name="password" id="password" value="{{ password }}">
                 </div>
                 <div class="main__show-password">
                     <span flag="{{ flag }}">{{ hint }}</span>

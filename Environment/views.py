@@ -13,7 +13,7 @@ from .models import User
 class RegisterView(View):
     def get(self, request: HttpRequest):
         if not (request.session.get('login', False)):
-            return render(request, 'environment/user/register.html', {'hint': 'Пароль должен быть более 8 символов', 'flag': 'false'})
+            return render(request, 'environment/user/register.html', {'hint': 'Пароль должен не менее 8 символов', 'flag': 'false'})
         return redirect('/workspace')
 
     def post(self, request: HttpRequest):
@@ -22,17 +22,25 @@ class RegisterView(View):
         email = request.POST.get('email', False)
         password = request.POST.get('password', False)
         confirm_password = request.POST.get('confirm_password', False)
+        
+        fields = {'username': username, 'email': email, 'password': password,
+                  'confirm_password': confirm_password, 'hint': '', 'flag': 'true'}
 
-        if not (all((username, email, password, confirm_password))):
-            return render(request, 'environment/user/register.html', {'hint': 'Все поля, отмеченные *, должны быть заполнены.', 'flag': 'true'})
+        if not(all((username, email, password, confirm_password))):
+            fields['hint'] = 'Все поля, отмеченные *, должны быть заполнены.'
+            return render(request, 'environment/user/register.html', fields)
         if (password != confirm_password):
-            return render(request, 'environment/user/register.html', {'hint': 'Введённые пароли не совпадают.', 'flag': 'true'})
+            fields['hint'] = 'Введённые пароли не совпадают.'
+            return render(request, 'environment/user/register.html', fields)
         if not (re.fullmatch(r'[a-zA-Z]\w{4,}', username)):
-            return render(request, 'environment/user/register.html', {'hint': 'Введённый псевдоним должен содержать не менее 5 символов английского алфавита.', 'flag': 'true'})
+            fields['hint'] = 'Введённый псевдоним должен содержать не менее 5 символов английского алфавита.'
+            return render(request, 'environment/user/register.html', fields)
         if (not (re.fullmatch(r'[a-z0-9\.]+?@[a-z]+?\.(com|ru)', email))):
-            return render(request, 'environment/user/register.html', {'hint': 'Введённый адрес электронной почты некорректен.', 'flag': 'true'})
+            fields['hint'] = 'Введённый адрес электронной почты некорректен.'
+            return render(request, 'environment/user/register.html', fields)
         if (not (re.fullmatch(r"""[\w~`=\-!@'"#№|$;%:&,<>/\\\^\?\*\(\)\[\]\{\}\+]{8,}""", password))):
-            return render(request, 'environment/user/register.html', {'hint': 'Введённый пароль некорректен.', 'flag': 'true'})
+            fields['hint'] = 'Введённый пароль некорректен.'
+            return render(request, 'environment/user/register.html', fields)
 
         try:
             User.objects.get(email=email)
@@ -54,8 +62,11 @@ class LoginView(View):
         email = request.POST.get('email', False)
         password = request.POST.get('password', False)
 
+        fields = {'email': email, 'password': password, 'hint': '', 'flag': 'true'}
+
         if not (all((email, password))):
-            return render(request, 'environment/user/login.html', {'hint': 'Все поля, отмеченные *, должны быть заполнены.', 'flag': 'true'})
+            fields['hint'] = 'Все поля, отмеченные *, должны быть заполнены.'
+            return render(request, 'environment/user/login.html', fields)
 
         try:
             User.objects.get(email=email, password=password)
@@ -64,15 +75,19 @@ class LoginView(View):
             request.session.set_expiry(timedelta(days=1))
             return redirect('/workspace')
         except:
-            return render(request, 'environment/user/login.html', {'hint': 'Пользователь не найден.', 'flag': 'true'})
+            fields['hint'] = 'Адрес электронной почты или пароль введены некорректно.'
+            return render(request, 'environment/user/login.html', fields)
 
 
 class WorkspaceView(View):
     def get(self, request: HttpRequest):
         if not (request.session.get('login', False)):
             return redirect('login')
+        request.session.set_expiry(timedelta(days=1))
         user = User.objects.get(email=request.session.get('__user-email'))
-        return render(request, 'environment/user/workspace.html', {'username': user.username, 'email': user.email, 'photo': user.photo.url})
+        return render(request, 'environment/user/workspace.html', 
+                      {'photo': user.photo.url, "own_projects": user.own_projects.all(), 'other_projects': user.projects.all()}
+                      )
 
     def post(self, request: HttpRequest):
         request.session.set_expiry(timedelta(microseconds=1))

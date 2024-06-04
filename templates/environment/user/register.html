@@ -24,7 +24,7 @@
                 {% csrf_token %}
                 <div class="main__input-name">
                     <label for="username">* Введите псевдоним</label>
-                    <input type="text" name="username" id="username" title="Пароль должен содержать не менее 5 символов и использовать буквы английского алфавита.">
+                    <input type="text" name="username" id="username" title="Пароль должен содержать не менее 5 символов и использовать буквы английского алфавита." value="{{ username }}">
                 </div>
                 <div class="main__input-photo">
                     <label for="photo">Выберите фото</label>
@@ -33,18 +33,18 @@
                 </div>
                 <div class="main__input-email">
                     <label for="email">* Введите адрес электронной почты</label>
-                    <input type="email" name="email" id="email">
+                    <input type="email" name="email" id="email" value="{{ email }}">
                 </div>
                 <div class="main__input-password">
                     <label for="password">* Введите пароль</label>
-                    <input type="password" name="password" id="password">
+                    <input type="password" name="password" id="password" value="{{ password }}">
                 </div>
                 <div class="main__confirm-password">
                     <label for="confirm_password">* Подтвердите пароль</label>
-                    <input type="password" name="confirm_password" id="confirm_password">
+                    <input type="password" name="confirm_password" id="confirm_password" value="{{ confirm_password }}">
                 </div>
                 <div class="main__show-password">
-                    <span flag="{{ flag }}">{{ hint }}</span>
+                    <span class="main__hint-message" flag="{{ flag }}">{{ hint }}</span>
                     <div>
                         <input type="checkbox" name="show" id="show">
                         <label for="show">Показать пароль</label>
