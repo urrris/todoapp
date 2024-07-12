@@ -115,7 +115,7 @@ div[class^='main__show'] {
     color: #333;
 }
 
-.main__show-password span[flag='true'] {
+.main__show-password span[colorized='true'] {
     color: rgba(255, 0, 0, 0.75);
 }
 

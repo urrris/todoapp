@@ -13,11 +13,11 @@
     <header class="header">
         <div class="header__back-to-register-block">
             <a href="{% url 'register' %}">
-                <img src="{% static 'img/register|login/arrow-left.svg' %}" alt="Arrow left">
+                <img src="{% static 'img/register-login/arrow-left.svg' %}" alt="Arrow left">
             </a>
         </div>
         <div class="header__decoration-block">
-            <img src="{% static 'img/register|login/circle.svg' %}" alt="Circle">
+            <img src="{% static 'img/register-login/circle.svg' %}" alt="Circle">
         </div>
     </header>
 
@@ -39,7 +39,7 @@
                     <input type="password" name="password" id="password" value="{{ password }}">
                 </div>
                 <div class="main__show-password">
-                    <span flag="{{ flag }}">{{ hint }}</span>
+                    <span colorized="{{ colorized }}">{{ hint }}</span>
                     <div>
                         <input type="checkbox" name="show" id="show">
                         <label for="show">Показать пароль</label>
@@ -49,7 +49,7 @@
             </form>
         </div>
     </main>
-    <script src="{% static 'js/login.js' %}"></script>
+    <script type='module' src="{% static 'js/login.js' %}"></script>
 </body>
 
 </html>

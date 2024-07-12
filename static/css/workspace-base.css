@@ -1,0 +1,304 @@
+@import url('https://fonts.googleapis.com/css2?family=Exo+2&display=swap');
+/* regular */
+@import url('https://fonts.googleapis.com/css2?family=Exo+2:wght@500&display=swap');
+/* medium */
+@import url('https://fonts.googleapis.com/css2?family=Exo+2:wght@600&display=swap');
+/* semibold */
+@import url('https://fonts.googleapis.com/css2?family=Exo+2:wght@700&display=swap');
+/* bold */
+
+/* =============================================== GENERAL STYLES =============================================== */
+html {
+    font-family: 'Exo 2', sans-serif;
+    font-size: 0.557vw;
+}
+
+a {
+    cursor: pointer;
+    text-decoration-color: currentColor;
+}
+
+/* =============================================== BODY STYLES =============================================== */
+.body {
+    display: grid;
+    grid-template-columns: repeat(9, 1fr);
+    grid-template-rows: repeat(10, 1fr);
+}
+
+/* =============================================== ASIDE STYLES =============================================== */
+.aside {
+    grid-column: span 2;
+    grid-row: span 10;
+    display: grid;
+    grid-template-rows: repeat(10, 1fr);
+    padding: 3.2rem 2.8rem;
+}
+
+.aside__workspace {
+    grid-row: span 9;
+    display: flex;
+    flex-direction: column;
+    overflow: auto;
+    row-gap: 3rem;
+    font-size: 1.6rem;
+}
+
+.block-title:not(:has(> label)),
+.block-title label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: bold;
+}
+
+.block-title label {
+    cursor: pointer;
+}
+
+.workspace__title span {
+    font-size: 3rem;
+}
+
+.show-items-button input,
+.items-list li {
+    display: none;
+    transition: display 0.5s linear;
+}
+
+.show-items-button img {
+    transform: rotate(90deg);
+    transition: transform 0.5s linear;
+}
+
+.show-items-button img[transformed=true] {
+    transform: none;
+}
+
+.items-list {
+    display: flex;
+    flex-direction: column;
+    row-gap: 1rem;
+    list-style-type: none;
+    padding-left: 2rem;
+    margin: 1rem 0rem;
+}
+
+.list-item {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    padding: 1rem 1.8rem;
+    border-radius: 1.8rem;
+    font-weight: 600;
+}
+
+.list-item:hover {
+    cursor: pointer;
+}
+
+.projects-list-item__edit-project-button img,
+.tasks-list-item__edit-task-button img {
+    width: 1.5rem;
+    height: 1.5rem;
+}
+
+.projects-list-item__edit-project-button:hover,
+.tasks-list-item__edit-task-button:hover {
+    padding: 0.1rem;
+    border-radius: 1rem;
+}
+
+.aside__switch-block {
+    align-self: center;
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    padding: 0.4rem;
+    font-weight: 600;
+    font-size: 1.4rem;
+    border-radius: 2.2rem;
+}
+
+.switch-theme {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    column-gap: 0.6rem;
+    padding: 1rem 0;
+    cursor: pointer;
+    border-radius: 1.8rem;
+    transition-property: background, color;
+    transition-duration: 1s, 1s;
+    transition-timing-function: linear, linear;
+}
+
+.switch-theme img {
+    opacity: 0.5;
+    transition: opacity 0.5s linear;
+}
+
+.switch-theme[state='active'] img {
+    opacity: 1;
+}
+
+.switch-block__input {
+    display: none;
+}
+
+.switch-block__slider {
+    position: absolute;
+    top: 0.4rem;
+    right: 0.4rem;
+    left: 0.4rem;
+    bottom: 0.4rem;
+    width: 50%;
+    background-color: transparent;
+    border-radius: 1.8rem;
+    transition: transform 0.5s linear;
+}
+
+.switch-block__input:checked+.switch-block__slider {
+    transform: translateX(calc((100 - 4.678362573) * 1%));
+}
+
+/* =============================================== MODAL WINDOWS STYLES =============================================== */
+#modal-background {
+    display: none;
+    position: fixed;
+    z-index: 1;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+}
+
+#modal-background>div[class$='modal-window'] {
+    margin: 30vh 30vw;
+    min-width: 40vw;
+    min-height: 30vh;
+    display: none;
+    padding: 2rem;
+    grid-template-columns: repeat(2, 1fr);
+    row-gap: 2rem;
+    font-size: 1.6rem;
+    border-radius: 1.8rem;
+}
+
+.form-title {
+    grid-column: span 2;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+}
+
+.form-title span {
+    font-size: 3.2rem;
+    font-weight: 500;
+}
+
+.close-modal-window-button img {
+    width: 2rem;
+    height: 2rem;
+}
+
+.create-smth-modal-window {
+    padding: 4rem !important;
+    row-gap: 4rem !important;
+}
+
+.create-smth-modal-window__form {
+    grid-column: span 2;
+    display: flex;
+    justify-content: space-around;
+    margin: 0;
+}
+
+.create-smth-button {
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-evenly;
+    border: 0.1rem solid #ddd;
+    border-radius: 1.5rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: box-shadow 0.3s linear;
+}
+
+.create-smth-button img {
+    width: 10rem;
+    height: 10rem;
+}
+
+.project-modal-window__form,
+.task-modal-window__form {
+    grid-column: span 2;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    row-gap: 1rem;
+    margin: 0;
+}
+
+*[id^='project'],
+*[id^='task'] {
+    border: 1px solid #ddd;
+    border-radius: 0.5rem;
+    padding: 0.5rem;
+}
+
+.project-modal-window__form > div {
+    grid-column: span 4;
+    display: flex;
+    flex-direction: column;
+    row-gap: 0.5rem;
+}
+
+.project-modal-window input[class$='button'],
+.task-modal-window input[class$='button'] {
+    margin-top: 1rem;
+    padding: 1rem;
+    grid-column: 2 / span 2;
+    background-color: rgba(17, 17, 17, 0.25);
+    color: #fff;
+    font-weight: 500;
+    font-size: 2.2rem;
+    text-align: center;
+    border: none;
+    border-radius: 3.2rem;
+    cursor: pointer;
+    transition: background-color 0.75s linear;
+}
+
+input[class$='__delete-button'] {
+    background-color: rgba(255, 0, 0, 0.5) !important;
+}
+
+.task-modal-window {
+    margin: 10vh 25vw !important;
+    min-width: 30vw !important;
+    min-height: 80vh !important;
+}
+
+.task-modal-window__form > div {
+    display: flex;
+    flex-direction: column;
+    row-gap: 2rem;
+    padding: 1rem;
+}
+
+.task-modal-window__main-fields {
+    grid-column: span 3;
+}
+
+.task-modal-window__main-fields > div,
+.task-modal-window__secondary-fields > div {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    row-gap: 1rem;
+}
+
+textarea {
+    resize: none;
+}

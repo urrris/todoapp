@@ -4,20 +4,294 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Вход</title>
+    <title>Рабочее пространство</title>
+    <link rel="stylesheet" href="{% static 'css/normalize.css' %}">
+    <link rel="stylesheet" href="{% static 'css/workspace-base.css' %}">
+    {% if theme %}
+    <link rel="stylesheet" href="{% static 'css/workspace-black.css' %}">
+    {% else %}
+    <link rel="stylesheet" href="{% static 'css/workspace-white.css' %}">
+    {% endif %}
 </head>
 
-<body>
+<body class="body">
+    <aside class="aside">
+        <div class="aside__workspace">
+            <div class="workspace__title block-title">
+                <span>Рабочее пространство</span>
+                <a class="workspace__create-smth-button">
+                    {% if theme %}
+                    <img src="{% static 'img/workspace/plus-icon-light.svg' %}" alt="+">
+                    {% else %}
+                    <img src="{% static 'img/workspace/plus-icon.svg' %}" alt="+">
+                    {% endif %}
+                </a>
+            </div>
+            <div class="workspace__projects-section">
+                <div class="projects-section__title block-title">
+                    <label for="projects-checkbox" class="show-items-button">
+                        <span>Проекты</span>
+                        <input type="checkbox" id="projects-checkbox">
+                        {% if theme %}
+                        <img src="{% static 'img/workspace/arrow-light.svg' %}" alt="←">
+                        {% else %}
+                        <img src="{% static 'img/workspace/arrow.svg' %}" alt="←">
+                        {% endif %}
+                    </label>
+                </div>
+                <ul class="projects-section__projects-list items-list">
+                    {% for project in own_projects %}
+                    <li class="projects-list__item list-item">
+                        <span p-type="own">{{ project.title }}</span>
+                        <a class="projects-list-item__edit-project-button">
+                            {% if theme %}
+                            <img src="{% static 'img/workspace/three-dots-light.svg' %}" alt="...">
+                            {% else %}
+                            <img src="{% static 'img/workspace/three-dots.svg' %}" alt="...">
+                            {% endif %}
+                        </a>
+                    </li>
+                    {% endfor %}
+                    {% for project in other_projects %}
+                    <li class="projects-list__item list-item">
+                        <span p-type="other">{{ project.title }}</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            <div class="workspace__tasks-section">
+                <div class="tasks-section__title block-title">
+                    <label for="tasks-checkbox" class="show-items-button">
+                        <span>Задачи</span>
+                        <input type="checkbox" id="tasks-checkbox">
+                        {% if theme %}
+                        <img src="{% static 'img/workspace/arrow-light.svg' %}" alt="←">
+                        {% else %}
+                        <img src="{% static 'img/workspace/arrow.svg' %}" alt="←">
+                        {% endif %}
+                    </label>
+                </div>
+                <ul class="tasks-section__tasks-list items-list">
+                    <li class="list-item">
+                        <div class="tasks-list__tasks-todo-title block-title">
+                            <label for="tasks-todo__checkbox" class="show-items-button">
+                                <span>Нужно сделать</span>
+                                <input type="checkbox" id="tasks-todo__checkbox">
+                                {% if theme %}
+                                <img src="{% static 'img/workspace/arrow-light.svg' %}" alt="←">
+                                {% else %}
+                                <img src="{% static 'img/workspace/arrow.svg' %}" alt="←">
+                                {% endif %}
+                            </label>
+                        </div>
+                        <ul class="tasks-list__tasks-todo-list items-list">
+                        </ul>
+                    </li>
+                    <li class="list-item">
+                        <div class="tasks-list__tasks-progress-title block-title">
+                            <label for="tasks-progress__checkbox" class="show-items-button">
+                                <span>В процессе</span>
+                                <input type="checkbox" id="tasks-progress__checkbox">
+                                {% if theme %}
+                                <img src="{% static 'img/workspace/arrow-light.svg' %}" alt="←">
+                                {% else %}
+                                <img src="{% static 'img/workspace/arrow.svg' %}" alt="←">
+                                {% endif %}
+                            </label>
+                        </div>
+                        <ul class="tasks-list__tasks-progress-list items-list">
+                        </ul>
+                    </li>
+                    <li class="list-item">
+                        <div class="tasks-list__tasks-done-title block-title">
+                            <label for="tasks-done__checkbox" class="show-items-button">
+                                <span>Выполнено</span>
+                                <input type="checkbox" id="tasks-done__checkbox">
+                                {% if theme %}
+                                <img src="{% static 'img/workspace/arrow-light.svg' %}" alt="←">
+                                {% else %}
+                                <img src="{% static 'img/workspace/arrow.svg' %}" alt="←">
+                                {% endif %}
+                            </label>
+                        </div>
+                        <ul class="tasks-list__tasks-done-list items-list">
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        <div class="aside__switch-block">
+            {% if theme %}
+            <label for="change-theme" class="switch-block__light-theme switch-theme">
+                <img src="{% static 'img/workspace/sun-light.svg' %}" alt="The Sun">
+                <span>Light</span>
+            </label>
+            <label for="change-theme" class="switch-block__dark-theme switch-theme" state="active">
+                <img src="{% static 'img/workspace/moon-light.svg' %}" alt="The Moon">
+                <span>Dark</span>
+            </label>
+            <input type="checkbox" class="switch-block__input" id="change-theme" checked>
+            {% else %}
+            <label for="change-theme" class="switch-block__light-theme switch-theme" state="active">
+                <img src="{% static 'img/workspace/sun.svg' %}" alt="The Sun">
+                <span>Light</span>
+            </label>
+            <label for="change-theme" class="switch-block__dark-theme switch-theme">
+                <img src="{% static 'img/workspace/moon.svg' %}" alt="The Moon">
+                <span>Dark</span>
+            </label>
+            <input type="checkbox" class="switch-block__input" id="change-theme">
+            {% endif %}
+            <span class="switch-block__slider"></span>
+        </div>
+    </aside>
+
     <main class="main">
-        <h1>Вход в профиль успешно выполнен!</h1>
-        <p>{{ username }}</p>
-        <p>{{ email }}</p>
-        <img src="{{ photo }}">
         <form method="post">
             {% csrf_token %}
             <input type="submit" value="Выйти из аккаунта">
         </form>
+        <p style="font-size: 2rem;">{{ email }}</p>
+        <div id="modal-background">
+            <div class="create-smth-modal-window">
+                <div class="create-smth-modal-window__form-title form-title">
+                    <div></div>
+                    <span>Создание</span>
+                    <a class="close-modal-window-button">
+                        {% if theme %}
+                        <img src="{% static 'img/workspace/close-icon-light.svg' %}" alt="←">
+                        {% else %}
+                        <img src="{% static 'img/workspace/close-icon.svg' %}" alt="←">
+                        {% endif %}
+                    </a>
+                </div>
+                <div class="create-smth-modal-window__form">
+                    {% csrf_token %}
+                    <div class="form__create-project-button create-smth-button">
+                        {% if theme %}
+                        <img src="{% static 'img/workspace/project-logo-light.svg' %}" alt="Project logo">
+                        {% else %}
+                        <img src="{% static 'img/workspace/project-logo.svg' %}" alt="Project logo">
+                        {% endif %}
+                        <span class="form__button-caption">Проект</span>
+                    </div>
+                    <div class="form__create-task-button create-smth-button">
+                        {% if theme %}
+                        <img src="{% static 'img/workspace/task-logo-light.svg' %}" alt="Project logo">
+                        {% else %}
+                        <img src="{% static 'img/workspace/task-logo.svg' %}" alt="Project logo">
+                        {% endif %}
+                        <span class="form__button-caption">Задача</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="project-modal-window">
+                <div class="form-title">
+                    <span>Создать проект</span>
+                    <a class="close-modal-window-button">
+                        {% if theme %}
+                        <img src="{% static 'img/workspace/close-icon-light.svg' %}" alt="x">
+                        {% else %}
+                        <img src="{% static 'img/workspace/close-icon.svg' %}" alt="x">
+                        {% endif %}
+                    </a>
+                </div>
+                <form class="project-modal-window__form" method="post">
+                    {% csrf_token %}
+                    <input type="flag" name="create-project" style="display: none;" value="True">
+                    <div class="project-modal-window__input-project-name">
+                        <label for="project-name">Название</label>
+                        <input type="text" id="project-name" name="project-name"
+                            title="Название должно содержать от 5 до 50 символов и использовать английские буквы.">
+                    </div>
+                    <div class="project-modal-window__select-coworkers">
+                        <label for="project-coworkers">Коллеги</label>
+                        <select id="project-coworkers" type='select' name="project-coworkers" multiple>
+                            {% for friend in friends %}
+                            <option value="{{ friend.email }}">{{ friend.email }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <input type="button" class="project-modal-window__submit-button" value="Создать">
+                    <input type="button" class="project-modal-window__delete-button" value="Удалить">
+                </form>
+            </div>
+
+            <div class="task-modal-window">
+                <div class="form-title">
+                    <span>Создать задачу</span>
+                    <a class="close-modal-window-button">
+                        {% if theme %}
+                        <img src="{% static 'img/workspace/close-icon-light.svg' %}" alt="x">
+                        {% else %}
+                        <img src="{% static 'img/workspace/close-icon.svg' %}" alt="x">
+                        {% endif %}
+                    </a>
+                </div>
+                <form class="task-modal-window__form" method="post">
+                    {% csrf_token %}
+                    <input type='flag' name="create-task" style="display: none;"  value="True">
+                    <div class="task-modal-window__main-fields">
+                        <div class="task-modal-window__input-task-name">
+                            <label for="task-name">Название</label>
+                            <input type="text" id="task-name" name="task-name" title="Название должно содержать от 5 до 50 символов и использовать английские буквы.">
+                        </div>
+                        <div class="task-modal-window__input-task-description">
+                            <label for="task-description">Описание</label>
+                            <textarea type='txtarea' name="task-description" id="task-description" rows="25"></textarea>
+                        </div>
+                    </div>
+                    <div class="task-modal-window__secondary-fields">
+                        <div class="task-modal-window__select-project">
+                            <label for="task-project">Проект</label>
+                            <select type="select" name="task-project" id="task-project">
+                                {% for project in own_projects %}
+                                <option value="{{ project.title }}" p-type="own">{{ project.title }}</option>
+                                {% endfor %}
+                                {% for project in other_projects %}
+                                <option value="{{ project.title }}" p-type="other">{{ project.title }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="task-modal-window__select-task-executors">
+                            <label for="task-executors">Исполнители</label>
+                            <select type="select" id="task-executors" name="task-executors" multiple></select>
+                        </div>
+                        <div class="task-modal-window__set-task-deadline">
+                            <label for="task-deadline">Срок выполнения</label>
+                            <input type="date" name="task-deadline" id="task-deadline">
+                        </div>
+                        <div class="task-modal-window__set-task-priority">
+                            <label for="task-priority">Приоритет</label>
+                            <select type="select" id="task-priority" name="task-priority">
+                                <option value="1">High</option>
+                                <option value="2">Middle</option>
+                                <option value="3">Low</option>
+                            </select>
+                        </div>
+                        <div class="task-modal-window__set-task-status">
+                            <label for="task-status">Статус</label>
+                            <select type="select" id="task-status" name="task-status">
+                                <option value="Todo">Todo</option>
+                                <option value="InProgress">In progress</option>
+                                <option value="Done">Done</option>
+                            </select>
+                        </div>
+                    </div>
+                    <input type="button" class="task-modal-window__submit-button" value="Создать">
+                    <input type="button" class="task-modal-window__delete-button" value="Удалить">
+                </form>
+            </div>
+        </div>
     </main>
+    <script type='module' src="{% static 'js/workspace.js' %}"></script>
+    {% if theme %}
+    <script>
+        let event = new Event('click');
+        document.getElementById('change-theme').dispatchEvent(event);
+    </script>
+    {% endif %}
 </body>
 
 </html>

@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import User, Project, Task, Subtask
+from .models import User, Project, Task
 
 # Register your models here.
 
@@ -17,8 +17,3 @@ class ProjectAdmin(admin.ModelAdmin):
 @admin.register(Task)
 class TaskAdmin(admin.ModelAdmin):
     list_display = ["title", "project"]
-
-
-@admin.register(Subtask)
-class Subtask(admin.ModelAdmin):
-    list_display = ["title", "task"]

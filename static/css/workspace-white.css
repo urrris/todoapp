@@ -1,0 +1,55 @@
+/* =============================================== GENERAL STYLES =============================================== */
+html {
+    color: #1C1D22;
+    background-color: #ffffff;
+}
+
+/* =============================================== ASIDE STYLES =============================================== */
+.aside {
+    box-shadow: 4rem 18rem 8rem rgba(28, 29, 34, 0.06);
+}
+
+.list-item {
+    color: rgba(28, 29, 34, 0.5);
+}
+
+.list-item:hover {
+    background-color: rgba(28, 29, 34, 0.04);
+    color: rgba(28, 29, 34);
+}
+
+.projects-list-item__edit-project-button:hover {
+    background-color: rgba(28, 29, 34, 0.08);
+}
+
+.aside__switch-block {
+    background-color: rgba(28, 29, 34, 0.04);
+    border: 0.1rem solid rgba(28, 29, 34, 0.06);
+}
+
+.switch-theme {
+    color: rgba(28, 29, 34, 0.5);
+}
+
+.switch-theme[state='active'] {
+    color: rgba(28, 29, 34, 1);
+    background-color: #fff;
+}
+
+.switch-block__slider {
+    box-shadow: 0rem 0rem 0.5rem rgba(28, 29, 34, 0.2);
+}
+
+
+/* =============================================== MODAL WINDOWS STYLES =============================================== */
+#modal-background {
+    background-color: rgba(0, 0, 0, 0.4);
+}
+
+#modal-background>div[class$='modal-window'] {
+    background-color: white;
+}
+
+.create-smth-button:hover {
+    box-shadow: 0.2rem 0.2rem 1rem rgba(28, 29, 34, 0.2);
+}

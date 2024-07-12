@@ -13,7 +13,7 @@
     <main class="main">
         <div class="main__block">
             <div class="main__block-decoration">
-                <img src="{% static 'img/register|login/circle.svg' %}" alt="Circle">
+                <img src="{% static 'img/register-login/circle.svg' %}" alt="Circle">
             </div>
             <div class="main__form-title">
                 <span>Создать аккаунт</span>
@@ -24,7 +24,9 @@
                 {% csrf_token %}
                 <div class="main__input-name">
                     <label for="username">* Введите псевдоним</label>
-                    <input type="text" name="username" id="username" title="Пароль должен содержать не менее 5 символов и использовать буквы английского алфавита." value="{{ username }}">
+                    <input type="text" name="username" id="username"
+                        title="Пароль должен содержать от 5 символов до 50 и использовать буквы английского алфавита."
+                        value="{{ username }}">
                 </div>
                 <div class="main__input-photo">
                     <label for="photo">Выберите фото</label>
@@ -44,20 +46,20 @@
                     <input type="password" name="confirm_password" id="confirm_password" value="{{ confirm_password }}">
                 </div>
                 <div class="main__show-password">
-                    <span class="main__hint-message" flag="{{ flag }}">{{ hint }}</span>
+                    <span class="main__hint-message" colorized="{{ colorized }}">{{ hint }}</span>
                     <div>
                         <input type="checkbox" name="show" id="show">
                         <label for="show">Показать пароль</label>
                     </div>
                 </div>
-                <input class="main__submit-button" name='submit' type="submit" value="Создать в аккаунт">
+                <input class="main__submit-button" name='submit' type="submit" value="Создать аккаунт">
             </form>
             <div class="main__block-decoration">
-                <img src="{% static 'img/register|login/illustration.svg' %}" alt="Illustration">
+                <img src="{% static 'img/register-login/illustration.svg' %}" alt="Illustration">
             </div>
         </div>
     </main>
-    <script src="{% static 'js/register.js' %}"></script>
+    <script type='module' src="{% static 'js/register.js' %}"></script>
 </body>
 
 </html>

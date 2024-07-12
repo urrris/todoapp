@@ -102,7 +102,7 @@ div[class^='main__show'] {
     row-gap: 1rem;
 }
 
-.main__show-password span[flag='true'] {
+.main__show-password span[colorized='true'] {
     color: rgba(255, 0, 0, 0.9);
 }
 

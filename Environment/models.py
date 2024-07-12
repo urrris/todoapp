@@ -8,6 +8,8 @@ class User(models.Model):
     height = models.IntegerField("Высота фото", default=0)
     width = models.IntegerField("Ширина фото", default=0)
     photo = models.ImageField('Фото', blank=True, height_field="height", width_field="width", upload_to=f"users/{email}/photos")
+    theme = models.BooleanField('Тема рабочего пространства', default=False)
+    friends = models.ManyToManyField('self', blank=True)
 
     class Meta:
         verbose_name = "Пользователь"
@@ -20,7 +22,7 @@ class User(models.Model):
 class Project(models.Model):
     title = models.CharField('Название', max_length=50)
     creator = models.ForeignKey(User, on_delete=models.CASCADE, related_name="own_projects")
-    coworkers = models.ManyToManyField(User, related_name="projects")
+    coworkers = models.ManyToManyField(User, related_name="other_projects")
 
     class Meta:
         verbose_name = "Проект"
@@ -41,8 +43,7 @@ class Task(models.Model):
         "Done": "Done"
     }, default="Todo")
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name="tasks")
-    creator = models.ForeignKey(User, on_delete=models.CASCADE, related_name="own_tasks")
-    coworkers = models.ManyToManyField(User, related_name="tasks")
+    executors = models.ManyToManyField(User, related_name='tasks')
 
     class Meta:
         verbose_name = "Задача"
@@ -50,21 +51,3 @@ class Task(models.Model):
 
     def __str__(self):
         return f"Task({self.title}: {self.project})"
-
-
-class Subtask(models.Model):
-    title = models.CharField('Название', max_length=35)
-    description = models.TextField("Описание", blank=True)
-    priority = models.IntegerField("Приоритет", choices=[(1, "High"), (2, "Middle"), (3, "Low")], default=1)
-    status = models.CharField(choices={
-        "Todo": "Todo",
-        "Done": "Done"
-    }, default="Todo")
-    task = models.ForeignKey(Task, on_delete=models.CASCADE, related_name="subtasks")
-
-    class Meta:
-        verbose_name = "Подзадача"
-        verbose_name_plural = "Подзадачи"
-
-    def __str__(self):
-        return f"Subtask({self.title}: {self.task})"

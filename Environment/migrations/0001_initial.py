@@ -56,21 +56,6 @@ class Migration(migrations.Migration):
                 'verbose_name_plural': 'Задачи',
             },
         ),
-        migrations.CreateModel(
-            name='Subtask',
-            fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('title', models.CharField(max_length=35, verbose_name='Название')),
-                ('description', models.TextField(blank=True, verbose_name='Описание')),
-                ('priority', models.IntegerField(choices=[(1, 'High'), (2, 'Middle'), (3, 'Low')], default=1, verbose_name='Приоритет')),
-                ('status', models.CharField(choices=[('Todo', 'Todo'), ('Done', 'Done')], default='Todo')),
-                ('task', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='subtasks', to='Environment.task')),
-            ],
-            options={
-                'verbose_name': 'Подзадача',
-                'verbose_name_plural': 'Подзадачи',
-            },
-        ),
         migrations.AddField(
             model_name='project',
             name='coworkers',
