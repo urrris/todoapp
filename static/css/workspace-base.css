@@ -161,6 +161,43 @@ a {
     transform: translateX(calc((100 - 4.678362573) * 1%));
 }
 
+/* =============================================== HEADER STYLES =============================================== */
+.header {
+    grid-column: span 7;
+    grid-row: span 1;
+    padding: 3rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.header__current-project-name {
+    font-size: 2rem;
+    font-weight: 700;
+}
+
+.header__user-function-icons {
+    display: flex;
+    align-items: center;
+    column-gap: 4rem;
+    padding: 0.7rem 0;
+}
+
+.header__user-function-icons:not(:last-child) img {
+    width: 2.2rem;
+    height: 2.2rem;
+}
+
+.user-function-icons__search-icon {
+    transition: opacity 0.5s linear;
+}
+
+.user-function-icons__user-profile-icon img {
+    width: 3.6rem;
+    height: 3.6rem;
+    border-radius: 50%;
+}
+
 /* =============================================== MODAL WINDOWS STYLES =============================================== */
 #modal-background {
     display: none;
@@ -241,7 +278,8 @@ a {
 }
 
 *[id^='project'],
-*[id^='task'] {
+*[id^='task'],
+*[id^='search'] {
     border: 1px solid #ddd;
     border-radius: 0.5rem;
     padding: 0.5rem;
@@ -301,4 +339,70 @@ input[class$='__delete-button'] {
 
 textarea {
     resize: none;
+}
+
+.search-modal-window {
+    margin: 10vh 25vw !important;
+    width: 50vw !important;
+    min-height: 10vh !important;
+}
+
+.search-modal-window__form {
+    grid-column: span 2;
+}
+
+.search-modal-window__form input {
+    width: 100%;
+}
+
+.search-modal-window__search-results {
+    grid-column: span 2;
+    list-style-type: none;
+    display: flex;
+    flex-direction: column;
+    row-gap: 2rem;
+    overflow: auto;
+    padding: 0;
+}
+
+.search-results__search-result-item {
+    display: grid;
+    grid-template-rows: repeat(2, 1fr);
+    grid-template-columns: repeat(10, 1fr);
+    row-gap: 1rem;
+    column-gap: 1rem;
+}
+
+.search-result-item__item-photo, 
+.search-result-item__control-item-button {
+    grid-column: span 1;
+    grid-row: 1 / span 2;
+    justify-self: center;
+    align-self: center;
+    width: 5rem;
+    height: 5rem;
+    border-radius: 50%;
+}
+
+.search-result-item__item-name {
+    font-size: 2rem;
+    font-weight: 700;
+    grid-column: span 8;
+}
+
+.search-result-item__item-email {
+    font-size: 1.5rem;
+    font-weight: 500;
+    grid-column: span 8;
+}
+
+.search-result-item__control-item-button {
+    grid-column-start: 10;
+    width: 2.5rem !important;
+    height: 2.5rem !important;
+    border-radius: 0 !important;
+}
+
+.search-result-item__control-item-button:hover {
+    cursor: pointer;
 }

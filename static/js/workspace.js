@@ -2,6 +2,16 @@
 import { checkFormFields } from './base.mjs';
 
 /**
+ * Аналог функции fullmatch из python-библиотеки re.
+ * @param {RegExp} pattern 
+ * @param {string} str 
+ * @returns {Boolean}
+ */
+function fullMatch(pattern, str) {
+    var match = str?.match(pattern);
+    return match && match[0] === str ? match : null;
+}
+/**
  * Изменяет видимость элементов списка (проектов / задач).
  */
 function showHideListItems() {
@@ -113,6 +123,9 @@ function getTasksByProject() {
 function getExecutorsByProject() {
     let projectName, projectType;
     if (this instanceof HTMLSelectElement) {
+        if (this.value == '') { // При отсутствии проектов у пользователя
+            return;
+        } 
         projectName = this.value;
         projectType = this.options[this.selectedIndex].getAttribute('p-type');
     } else {
@@ -138,6 +151,87 @@ function getExecutorsByProject() {
                 option.textContent = executor;
 
                 executorsField.appendChild(option);
+            }
+        }
+    }
+
+    xhr.send();
+}
+/**
+ * Асинхронно осуществялет поиск пользователей по их имени / почте и подгружает результаты в модальное окно поиска.
+ * @param {KeyboardEvent} event 
+ */
+function searchForUsers(event) {
+    // Проверка на ввод допустимого для email-адреса символа
+    let keyRegex = new RegExp('[a-z0-9@\\.]');
+    if (!fullMatch(keyRegex, event.key) && event.key != 'Backspace') {
+        return;
+    }
+
+    // Очистка поисковой выдачи при пустом запросе
+    let data = this.value;
+    let regex = new RegExp("[~`=\\.\\-!@'#№|\\$;%:&,<>/\\\\\^\\?\\*\\(\\)\\[\\]\\{\\}\\+ ]+"); 
+    if (data.replace(regex, '') == '') {
+        this.parentElement.nextElementSibling.innerHTML = '';
+        return;
+    }
+
+    let xhr = new XMLHttpRequest();
+    xhr.open('GET', '/search-for-users/');
+    xhr.setRequestHeader('data', data);
+
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState == 4 && xhr.status == 200) {
+            let response = JSON.parse(xhr.responseText);
+            let searchModalWindow = document.querySelector('.search-modal-window');
+            let searchResultsBlock = searchModalWindow.querySelector('ul');
+            let li, userPhoto, userName, userEmail, addFriendButton, deleteFriendButton;
+
+            searchResultsBlock.innerHTML = '';
+            for (let key of Object.keys(response['users'])) {
+                li = document.createElement('li');
+                li.className = 'search-results__search-result-item';
+                
+                userPhoto = document.createElement('img');
+                userPhoto.className = 'search-result-item__item-photo';
+                userPhoto.setAttribute('src', response['users'][key][1]);
+                userPhoto.setAttribute('alt', '...');
+
+                userName = document.createElement('span');
+                userName.className = 'search-result-item__item-name';
+                userName.textContent = response['users'][key][0];
+
+                userEmail = document.createElement('span');
+                userEmail.className = 'search-result-item__item-email';
+                userEmail.textContent = key;
+
+                li.appendChild(userPhoto);
+                li.appendChild(userName);
+                li.appendChild(userEmail);
+                
+                if (response['users'][key][2]) {
+                    deleteFriendButton = document.createElement('img');
+                    deleteFriendButton.className = 'search-result-item__control-item-button';
+                    if (response['theme']) {
+                        deleteFriendButton.setAttribute('src', '/static/img/workspace/delete-friend-light.png');
+                    } else {
+                        deleteFriendButton.setAttribute('src', '/static/img/workspace/delete-friend.svg');
+                    }
+                    li.appendChild(deleteFriendButton);
+                } else {
+                    addFriendButton = document.createElement('img');
+                    addFriendButton.className = 'search-result-item__control-item-button';
+                    if (response['theme']) {
+                        addFriendButton.setAttribute('src', '/static/img/workspace/add-friend-light.svg');
+                    } else {
+                        addFriendButton.setAttribute('src', '/static/img/workspace/add-friend.svg');
+                    }
+                    li.appendChild(addFriendButton);
+
+                }
+                
+                
+                searchResultsBlock.appendChild(li);
             }
         }
     }
@@ -189,17 +283,6 @@ function changeTheme() {
 function validateForm() {
     let form = this.closest('form');
     let taskNewTaskProjectType, taskOldTaskProjectType;
-
-    /**
-     * Аналог функции fullmatch из python-библиотеки re.
-     * @param {RegExp} pattern 
-     * @param {string} str 
-     * @returns {Boolean}
-     */
-    function fullMatch(pattern, str) {
-        var match = str.match(pattern);
-        return match && match[0] === str ? match : null;
-    }
 
     if (form.className.startsWith('project')) {  // Форма проекта
         let projectNameField = form.querySelector('.project-modal-window__input-project-name > input');
@@ -597,6 +680,20 @@ function showTask(event) {
     }
 }
 
+function showSearchModalWindow() {
+    let searchModalWindow = document.querySelector('.search-modal-window');
+    let searchField = document.getElementById('search-field');
+    let searchResultsBlock = searchModalWindow.querySelector('ul');
+
+    searchField.value = '';
+    searchResultsBlock.innerHTML = '';
+
+    window.onkeyup = (event) => controlVisibilityOfModalWindows(event, searchModalWindow);
+    modalBackground.style.display = 'block';
+    searchModalWindow.style.display = 'grid';
+    searchField.addEventListener('keyup', searchForUsers);
+}
+
 
 let showItemsButtons = document.querySelectorAll('.show-items-button input');
 for (let button of showItemsButtons) {
@@ -647,3 +744,6 @@ let modalBackground = document.querySelector('#modal-background');
 let taskProjectField = document.getElementById('task-project');
 taskProjectField.addEventListener('change', getExecutorsByProject);
 getExecutorsByProject.call(taskProjectField);
+
+let searchButton = document.querySelector('.user-function-icons__search-icon');
+searchButton.addEventListener('click', showSearchModalWindow);

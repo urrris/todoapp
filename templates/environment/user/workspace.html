@@ -146,6 +146,29 @@
         </div>
     </aside>
 
+    <header class="header">
+        <div class="header__current-project-name">Default project name</div>
+        <div class="header__user-function-icons">
+            <a class="user-function-icons__search-icon">
+                {% if theme %}
+                <img src="{% static 'img/workspace/search-light.svg' %}" alt="The loupe">
+                {% else %}
+                <img src="{% static 'img/workspace/search.svg' %}" alt="The loupe">
+                {% endif %}
+            </a>
+            <a class="user-function-icons__notification-icon">
+                {% if theme %}
+                    <img src="{% static 'img/workspace/notification-light.svg' %}" alt="The bell">
+                {% else %}
+                    <img src="{% static 'img/workspace/notification.svg' %}" alt="The bell">
+                {% endif %}
+            </a>
+            <a class="user-function-icons__user-profile-icon">
+                <img src="{{ photo }}" alt="User's photo">
+            </a>
+        </div>
+    </header>
+
     <main class="main">
         <form method="post">
             {% csrf_token %}
@@ -203,7 +226,7 @@
                     <div class="project-modal-window__input-project-name">
                         <label for="project-name">Название</label>
                         <input type="text" id="project-name" name="project-name"
-                            title="Название должно содержать от 5 до 50 символов и использовать английские буквы.">
+                            placeholder="Название должно содержать от 5 до 50 символов и использовать английские буквы.">
                     </div>
                     <div class="project-modal-window__select-coworkers">
                         <label for="project-coworkers">Коллеги</label>
@@ -235,7 +258,7 @@
                     <div class="task-modal-window__main-fields">
                         <div class="task-modal-window__input-task-name">
                             <label for="task-name">Название</label>
-                            <input type="text" id="task-name" name="task-name" title="Название должно содержать от 5 до 50 символов и использовать английские буквы.">
+                            <input type="text" id="task-name" name="task-name" placeholder="Название должно содержать от 5 до 50 символов и использовать английские буквы.">
                         </div>
                         <div class="task-modal-window__input-task-description">
                             <label for="task-description">Описание</label>
@@ -282,6 +305,23 @@
                     <input type="button" class="task-modal-window__submit-button" value="Создать">
                     <input type="button" class="task-modal-window__delete-button" value="Удалить">
                 </form>
+            </div>
+
+            <div class="search-modal-window">
+                <div class="form-title">
+                    <span>Поиск пользователей</span>
+                    <a class="close-modal-window-button">
+                        {% if theme %}
+                        <img src="{% static 'img/workspace/close-icon-light.svg' %}" alt="x">
+                        {% else %}
+                        <img src="{% static 'img/workspace/close-icon.svg' %}" alt="x">
+                        {% endif %}
+                    </a>
+                </div>
+                <div class="search-modal-window__form">
+                    <input type="text" name="search-field" id="search-field" placeholder="Введите имя или почту пользователя">
+                </div>
+                <ul class="search-modal-window__search-results"></ul>
             </div>
         </div>
     </main>

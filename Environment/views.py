@@ -1,8 +1,8 @@
-import re
 from datetime import timedelta
 from django.http import HttpRequest, JsonResponse
 from django.shortcuts import render, redirect
 from django.views import View
+from re import fullmatch
 from .models import User, Project, Task
 
 
@@ -11,7 +11,8 @@ class RegisterView(View):
 
     def get(self, request: HttpRequest):
         if not (request.session.get('login', False)):
-            return render(request, 'environment/user/register.html', {'hint': 'Пароль должен быть от 8 до 50 символов', 'colorized': 'false'})
+            context = {'hint': 'Пароль должен быть от 8 до 50 символов', 'colorized': 'false'}
+            return render(request, 'environment/user/register.html', context=context)
         return redirect('/workspace')
 
     def post(self, request: HttpRequest):
@@ -33,13 +34,13 @@ class RegisterView(View):
         if (len(password) > 50):
             form_fields['hint'] = 'Введённый пароль не должен превышать длину в 50 символов.'
             return render(request, 'environment/user/register.html', context=form_fields)
-        if not (re.fullmatch(r'[a-zA-Z]\w{4,49}', username)):
+        if not (fullmatch(r'[a-zA-Z]\w{4,49}', username)):
             form_fields['hint'] = 'Введённый псевдоним должен содержать от 5 до 50 символов английского алфавита.'
             return render(request, 'environment/user/register.html', context=form_fields)
-        if (not (re.fullmatch(r'[a-z0-9\.]+?@[a-z]+?\.(com|ru)', email))):
+        if (not (fullmatch(r'[a-z0-9\.]+?@[a-z]+?\.(com|ru)', email))):
             form_fields['hint'] = 'Введённый адрес электронной почты некорректен.'
             return render(request, 'environment/user/register.html', context=form_fields)
-        if (not (re.fullmatch(r"""[\w~`=\-!@'"#№|$;%:&,<>/\\\^\?\*\(\)\[\]\{\}\+]{8,}""", password))):
+        if (not (fullmatch(r"""[\w~`=\-!@'"#№|$;%:&,<>/\\\^\?\*\(\)\[\]\{\}\+]{8,}""", password))):
             form_fields['hint'] = 'Введённый пароль некорректен.'
             return render(request, 'environment/user/register.html', context=form_fields)
 
@@ -96,7 +97,7 @@ class WorkspaceView(View):
         request.session.set_expiry(timedelta(days=1))
         user = User.objects.get(email=request.session.get('__user-email'))
         context = {"own_projects": user.own_projects.all(), 'other_projects': user.other_projects.all(),
-                   'friends': user.friends.all(), 'theme': user.theme, 'email': user.email}
+                   'friends': user.friends.all(), 'theme': user.theme, 'email': user.email, 'photo': user.photo.url}
         return render(request, 'environment/user/workspace.html', context=context)
 
     def post(self, request: HttpRequest):
@@ -332,3 +333,17 @@ def delete_task(request: HttpRequest):
     task.delete()
 
     return JsonResponse({})
+
+
+def search_for_users(request: HttpRequest):
+    data = request.headers.get('Data')
+    email = request.session.get('__user-email')
+    user = User.objects.get(email=email)
+
+    users = User.objects.filter(email__icontains=data)
+    users = users.union(User.objects.filter(username__icontains=data))
+    result = {'theme': user.theme}
+    result['users'] = {u.email: (u.username, u.photo.url, False) for u in users if u != user and not(user.friends.contains(u))}
+    result['users'].update({u.email: (u.username, u.photo.url, True) for u in users if user.friends.contains(u)})
+
+    return JsonResponse(data=result)

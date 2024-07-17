@@ -1,13 +1,18 @@
 from django.db import models
 
 
+def user_directory_path(instance, filename):
+    """Формирует путь для сохранения фотографий пользователя."""
+    return f"users/{instance.email}/photos/{filename}"
+
+
 class User(models.Model):
     username = models.CharField('Псевдоним', max_length=50)
     email = models.EmailField('E-mail', primary_key=True)
     password = models.CharField('Пароль', max_length=50)
     height = models.IntegerField("Высота фото", default=0)
     width = models.IntegerField("Ширина фото", default=0)
-    photo = models.ImageField('Фото', blank=True, height_field="height", width_field="width", upload_to=f"users/{email}/photos")
+    photo = models.ImageField('Фото', blank=True, height_field="height", width_field="width", upload_to=user_directory_path)
     theme = models.BooleanField('Тема рабочего пространства', default=False)
     friends = models.ManyToManyField('self', blank=True)
 

@@ -50,7 +50,8 @@ html {
 }
 
 *[id^='project'],
-*[id^='task'] {
+*[id^='task'],
+*[id^='search'] {
     background-color: #2A2B2F;
     color: #fff;
     font-weight: 600;
