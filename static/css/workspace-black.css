@@ -60,3 +60,7 @@ html {
 .create-smth-button:hover {
     box-shadow: 0.2rem 0.2rem 1rem rgba(28, 29, 34, 0.16);
 }
+
+.notifications-list__notification:hover {
+    background-color: rgba(255, 255, 255, 0.08);
+}

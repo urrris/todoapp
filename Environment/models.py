@@ -56,3 +56,30 @@ class Task(models.Model):
 
     def __str__(self):
         return f"Task({self.title}: {self.project})"
+
+
+class Notification(models.Model):
+    recipient = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notifications')
+    sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='+')
+    type = models.CharField(choices={
+        'FriendRequest': 'Friend request',
+        'FriendRequestAccepted': 'Friend request accepted',
+        'Unfriending': 'Unfriending',
+        'SetProjectCoworker': 'Set as project coworker',
+        'DeleteProjectCoworker': 'Delete from project coworkers',
+        'AddProjectCoworker': 'Add as project coworker',
+        'SetTaskExecutor': 'Set as task executor',
+        'DeleteTaskExecutor': 'Delete from task executors',
+        'AddTaskExecutor': 'Add as task executor',
+        'DeadlineApproaching': 'Task deadline is approaching',
+        'DeadlineOver': 'Task deadline is over'
+    }, default='FriendRequest')
+    project = models.CharField('Название проекта', blank=True)
+    task = models.CharField('Називание задачи', blank=True)
+
+    class Meta:
+        verbose_name = "Уведомление"
+        verbose_name_plural = "Уведомления"
+
+    def __str__(self):
+        return f"Notification({self.recipient}: {self.type})"

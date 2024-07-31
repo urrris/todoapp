@@ -59,8 +59,8 @@ function getTasksByProject() {
     let xhr = new XMLHttpRequest();
 
     xhr.open('GET', '/get-tasks/');
-    xhr.setRequestHeader('project-name', projectName);
-    xhr.setRequestHeader('project-type', projectType);
+    xhr.setRequestHeader('project-name', encodeURIComponent(projectName));
+    xhr.setRequestHeader('project-type', encodeURIComponent(projectType));
 
     xhr.onreadystatechange = function () {
         if (xhr.readyState == 4 && xhr.status == 200) {
@@ -125,7 +125,7 @@ function getExecutorsByProject() {
     if (this instanceof HTMLSelectElement) {
         if (this.value == '') { // При отсутствии проектов у пользователя
             return;
-        } 
+        }
         projectName = this.value;
         projectType = this.options[this.selectedIndex].getAttribute('p-type');
     } else {
@@ -135,8 +135,8 @@ function getExecutorsByProject() {
     let xhr = new XMLHttpRequest();
 
     xhr.open('GET', '/get-task-executors/');
-    xhr.setRequestHeader('project-name', projectName);
-    xhr.setRequestHeader('project-type', projectType);
+    xhr.setRequestHeader('project-name', encodeURIComponent(projectName));
+    xhr.setRequestHeader('project-type', encodeURIComponent(projectType));
 
     xhr.onreadystatechange = function () {
         if (xhr.readyState == 4 && xhr.status == 200) {
@@ -170,7 +170,7 @@ function searchForUsers(event) {
 
     // Очистка поисковой выдачи при пустом запросе
     let data = this.value;
-    let regex = new RegExp("[~`=\\.\\-!@'#№|\\$;%:&,<>/\\\\\^\\?\\*\\(\\)\\[\\]\\{\\}\\+ ]+"); 
+    let regex = new RegExp("[~`=\\.\\-!@'#№|\\$;%:&,<>/\\\\\^\\?\\*\\(\\)\\[\\]\\{\\}\\+ ]+");
     if (data.replace(regex, '') == '') {
         this.parentElement.nextElementSibling.innerHTML = '';
         return;
@@ -178,7 +178,7 @@ function searchForUsers(event) {
 
     let xhr = new XMLHttpRequest();
     xhr.open('GET', '/search-for-users/');
-    xhr.setRequestHeader('data', data);
+    xhr.setRequestHeader('data', encodeURIComponent(data));
 
     xhr.onreadystatechange = function () {
         if (xhr.readyState == 4 && xhr.status == 200) {
@@ -191,7 +191,7 @@ function searchForUsers(event) {
             for (let key of Object.keys(response['users'])) {
                 li = document.createElement('li');
                 li.className = 'search-results__search-result-item';
-                
+
                 userPhoto = document.createElement('img');
                 userPhoto.className = 'search-result-item__item-photo';
                 userPhoto.setAttribute('src', response['users'][key][1]);
@@ -208,7 +208,7 @@ function searchForUsers(event) {
                 li.appendChild(userPhoto);
                 li.appendChild(userName);
                 li.appendChild(userEmail);
-                
+
                 if (response['users'][key][2]) {
                     deleteFriendButton = document.createElement('img');
                     deleteFriendButton.className = 'search-result-item__control-item-button';
@@ -217,6 +217,9 @@ function searchForUsers(event) {
                     } else {
                         deleteFriendButton.setAttribute('src', '/static/img/workspace/delete-friend.svg');
                     }
+                    deleteFriendButton.setAttribute('n-type', 'Unfriending');
+                    deleteFriendButton.addEventListener('click', deleteFriend);
+                    deleteFriendButton.addEventListener('click', sendNotification);
                     li.appendChild(deleteFriendButton);
                 } else {
                     addFriendButton = document.createElement('img');
@@ -226,11 +229,12 @@ function searchForUsers(event) {
                     } else {
                         addFriendButton.setAttribute('src', '/static/img/workspace/add-friend.svg');
                     }
+                    addFriendButton.setAttribute('n-type', 'FriendRequest');
+                    addFriendButton.addEventListener('click', sendNotification);
                     li.appendChild(addFriendButton);
-
                 }
-                
-                
+
+
                 searchResultsBlock.appendChild(li);
             }
         }
@@ -244,9 +248,11 @@ function changeTheme() {
     let darkThemeBlock = document.querySelector('.switch-block__dark-theme');
     let styles = document.querySelector('link:last-of-type');
     let images = document.querySelectorAll('img');
+    let csrfToken = document.querySelector('input[name="csrfmiddlewaretoken"]').value;
+    let data = new FormData();
     let xhr = new XMLHttpRequest();
 
-    xhr.open('GET', '/change-theme/');
+    xhr.open('POST', '/workspace/');
 
     // Здесь this - input:checkbox
     if (this.checked) {
@@ -260,7 +266,7 @@ function changeTheme() {
             image.setAttribute('src', path);
         }
 
-        xhr.setRequestHeader('theme', 'True');
+        data.set('theme', 'True');
     } else {
         lightThemeBlock.setAttribute('state', 'active');
         darkThemeBlock.setAttribute('state', '');
@@ -272,10 +278,12 @@ function changeTheme() {
             image.setAttribute('src', path);
         }
 
-        xhr.setRequestHeader('theme', 'False');
+        data.set('theme', 'False');
     }
 
-    xhr.send();
+    data.set('change-theme', 'True');
+    data.set("csrfmiddlewaretoken", csrfToken);
+    xhr.send(data);
 }
 /**
  * Проверяет поля формы в зависимости от её типа, после чего отправляет данные на сервер.
@@ -306,7 +314,7 @@ function validateForm() {
         if (!taskDeadlineField.value) {
             return;
         }
-        
+
         // Получение типов проектов, которым принадлежала и будет принадлежать задача - необходимо!
         let taskProjectField = form.querySelector('#task-project');
         taskNewTaskProjectType = taskProjectField.options[taskProjectField.selectedIndex].getAttribute('p-type');
@@ -319,13 +327,57 @@ function validateForm() {
     let xhr = new XMLHttpRequest();
 
     xhr.open('POST', '/workspace/');
-    xhr.setRequestHeader('project-type', taskNewTaskProjectType);
-    xhr.setRequestHeader('old-project-type', taskOldTaskProjectType);
+    formData.set('project-type', taskNewTaskProjectType);
+    formData.set('old-project-type', taskOldTaskProjectType);
 
     xhr.onreadystatechange = function () {
         if (xhr.readyState == 4 && xhr.status == 200) {
-            location.reload();
+            // Отправка уведомлений в зависимости от типа создаваемого / изменяемого объекта
+            if (form.className.startsWith('project')) {
+                let projectActionType = form.querySelector('input[type="flag"]').getAttribute('name');
+                if (projectActionType == 'create-project') {
+                    for (let coworker of form.elements['project-coworkers'].options) {
+                        if (coworker.selected) {
+                            coworker.setAttribute('n-type', 'SetProjectCoworker');
+                            sendNotification.call(coworker);
+                        }
+                    }
+                } else {
+                    for (let coworker of form.elements['project-coworkers'].options) {
+                        if (coworker.getAttribute('was-selected') == 'true' && !coworker.selected) {
+                            coworker.setAttribute('n-type', 'DeleteProjectCoworker');
+                            sendNotification.call(coworker);
+                        } else if (coworker.getAttribute('was-selected') == 'false' && coworker.selected) {
+                            coworker.setAttribute('n-type', 'AddProjectCoworker');
+                            sendNotification.call(coworker);
+                        }
+                    }
+                }
+            } else if (form.className.startsWith('task')) {
+                let taskActionType = form.querySelector('input[type="flag"]').getAttribute('name');
+                if (taskActionType == 'create-task') {
+                    for (let executor of form.elements['task-executors'].options) {
+                        if (executor.selected) {
+                            executor.setAttribute('n-type', 'SetTaskExecutor');
+                            sendNotification.call(executor);
+                            checkTaskDeadline.call(executor);
+                        }
+                    }
+                } else {
+                    for (let executor of form.elements['task-executors'].options) {
+                        if (executor.getAttribute('was-selected') == 'true' && !executor.selected) {
+                            executor.setAttribute('n-type', 'DeleteTaskExecutor');
+                            sendNotification.call(executor);
+                        } else if (executor.getAttribute('was-selected') == 'false' && executor.selected) {
+                            executor.setAttribute('n-type', 'AddTaskExecutor');
+                            sendNotification.call(executor);
+                            checkTaskDeadline.call(executor);
+                        }
+                    }
+                }
+            }
         }
+        location.reload();
     }
 
     xhr.send(formData);
@@ -450,8 +502,8 @@ function editProject() {
     let xhr = new XMLHttpRequest();
 
     xhr.open('GET', '/get-project-info/');
-    xhr.setRequestHeader('project-name', projectName);
-    xhr.setRequestHeader('project-type', projectType);
+    xhr.setRequestHeader('project-name', encodeURIComponent(projectName));
+    xhr.setRequestHeader('project-type', encodeURIComponent(projectType));
 
     // Асинхронная подгрузка полей формы
     xhr.onreadystatechange = function () {
@@ -468,6 +520,7 @@ function editProject() {
                 option = document.createElement('option');
                 option.value = coworker;
                 option.textContent = coworker;
+                option.setAttribute('was-selected', coworkersList[coworker]);
                 if (coworkersList[coworker] == true) {
                     option.selected = true;
                 }
@@ -492,11 +545,15 @@ function editProject() {
 
 function deleteProject() {
     let projectName = document.querySelector('input#project-name').value;
+    let csrfToken = document.querySelector('input[name="csrfmiddlewaretoken"]').value;
+    let data = new FormData();
     let xhr = new XMLHttpRequest();
     let deleteProjectButton = this;
 
-    xhr.open('GET', '/delete-project/');
-    xhr.setRequestHeader('project-name', projectName);
+    xhr.open('POST', '/workspace/');
+    data.set('delete-project', 'True');
+    data.set("csrfmiddlewaretoken", csrfToken);
+    data.set('project-name', projectName);
 
     xhr.onreadystatechange = function () {
         if (xhr.readyState == 4 && xhr.status == 200) {
@@ -505,7 +562,7 @@ function deleteProject() {
         }
     }
 
-    xhr.send();
+    xhr.send(data);
 }
 /**
  * @param {Event} event 
@@ -514,8 +571,12 @@ function showProject(event) {
     if (event.target instanceof HTMLImageElement) {  // Целевой объект нажатия - кнопка редактирования проекта
         editProject.call(event.target.parentElement);
     } else {
-        editProject.call(this.firstElementChild);
-        setTimeout(() => changeProjectForm.call(this), 50);
+        let project = this;
+        let promise = new Promise(function (resolve, reject) {
+            editProject.call(project.firstElementChild);
+            resolve('done');
+        });
+        promise.then(result => changeProjectForm.call(project));
     }
 }
 /**
@@ -593,9 +654,9 @@ function editTask() {
     let xhr = new XMLHttpRequest();
 
     xhr.open('GET', '/get-task-info/');
-    xhr.setRequestHeader('project-name', projectName);
-    xhr.setRequestHeader('project-type', projectType);
-    xhr.setRequestHeader('task-name', taskName);
+    xhr.setRequestHeader('project-name', encodeURIComponent(projectName));
+    xhr.setRequestHeader('project-type', encodeURIComponent(projectType));
+    xhr.setRequestHeader('task-name', encodeURIComponent(taskName));
 
     // Асинхронная подгрузка полей формы
     xhr.onreadystatechange = function () {
@@ -617,8 +678,8 @@ function editTask() {
                 option = document.createElement('option');
                 option.value = executor;
                 option.textContent = executor;
+                option.setAttribute('was-selected', executorsList[executor]);
                 if (executorsList[executor] == true) {
-                    console.log(executor);
                     option.selected = true;
                 }
 
@@ -651,13 +712,17 @@ function deleteTask() {
     let taskName = document.getElementById('task-name').value;
     let projectField = document.getElementById('task-project');
     let projectType = projectField.options[projectField.selectedIndex].getAttribute('p-type');
+    let csrfToken = document.querySelector('input[name="csrfmiddlewaretoken"]').value;
+    let data = new FormData();
     let xhr = new XMLHttpRequest();
     let deleteTaskButton = this;
 
-    xhr.open('GET', '/delete-task/');
-    xhr.setRequestHeader('task-name', taskName);
-    xhr.setRequestHeader('project-name', projectField.value);
-    xhr.setRequestHeader('project-type', projectType);
+    xhr.open('POST', '/workspace/');
+    data.set('delete-task', 'True');
+    data.set("csrfmiddlewaretoken", csrfToken);
+    data.set('task-name', taskName);
+    data.set('project-name', projectField.value);
+    data.set('project-type', projectType);
 
     xhr.onreadystatechange = function () {
         if (xhr.readyState == 4 && xhr.status == 200) {
@@ -666,7 +731,7 @@ function deleteTask() {
         }
     }
 
-    xhr.send();
+    xhr.send(data);
 }
 /**
  * @param {Event} event 
@@ -675,9 +740,75 @@ function showTask(event) {
     if (event.target instanceof HTMLImageElement) {  // Целевой объект нажатия - кнопка редактирования задачи
         editTask.call(event.target.parentElement);
     } else {
-        editTask.call(this.lastElementChild);
-        setTimeout(() => changeTaskForm.call(this), 50);
+        let task = this;
+        let promise = new Promise(function (resolve, reject) {
+            editTask.call(task.lastElementChild);
+            resolve('done');
+        });
+        promise.then(result => changeTaskForm.call(task));
     }
+}
+
+/**
+ * Меняет состояние иконки уведомлений в зависимости от их наличия.
+ */
+function checkNotificationsExistence() {
+    if (this.childElementCount == 0) {
+        let notificationIcon = document.querySelector('.user-function-icons__notification-icon img');
+        let iconPath = notificationIcon.getAttribute('src');
+
+        notificationIcon.setAttribute('src', iconPath.replace('_active', ''));
+        closeModalWindow.call(this);
+    }
+}
+
+function hideNotification() {
+    let notification = this.closest('.notifications-list__notification');
+    let notificationId = notification.querySelector('span:first-of-type').getAttribute('n-id');
+    let csrfToken = document.querySelector('input[name="csrfmiddlewaretoken"]').value;
+    let data = new FormData();
+    let xhr = new XMLHttpRequest();
+
+    xhr.open('POST', '/notification/');
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState == 4 && xhr.status == 200) {
+            let promise = new Promise(function (resolve, reject) {
+                notification.remove();
+                resolve('done');
+            });
+            promise.then(result => checkNotificationsExistence.call(document.querySelector('.notification-modal-window__notifications-list')));
+        }
+    }
+
+    data.set('r-type', 'hide-notification');
+    data.set('n-id', notificationId);
+    data.set("csrfmiddlewaretoken", csrfToken);
+    xhr.send(data);
+}
+
+function acceptFriendRequest() {
+    let notification = this.closest('.notifications-list__notification');
+    let notificationId = notification.querySelector('span:first-of-type').getAttribute('n-id');
+    let csrfToken = document.querySelector('input[name="csrfmiddlewaretoken"]').value;
+    let data = new FormData();
+    let xhr = new XMLHttpRequest();
+
+    xhr.open('POST', '/workspace/');
+    data.set('accept-friend-request', 'True');
+    data.set("csrfmiddlewaretoken", csrfToken);
+    data.set('n-id', notificationId);
+
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState == 4 && xhr.status == 200) {
+            let response = JSON.parse(xhr.responseText);
+
+            notification.setAttribute('n-type', 'FriendRequestAccepted');
+            notification.setAttribute('n-recipient', response['sender']);
+            sendNotification.call(notification);
+        }
+    }
+
+    xhr.send(data);
 }
 
 function showSearchModalWindow() {
@@ -692,6 +823,108 @@ function showSearchModalWindow() {
     modalBackground.style.display = 'block';
     searchModalWindow.style.display = 'grid';
     searchField.addEventListener('keyup', searchForUsers);
+}
+
+/**
+ * Настраивает и отображает модальное окно пользовательских уведомлений.
+ */
+function showNotifications() {
+    let notificationModalWindow = document.querySelector('.notification-modal-window');
+    let hideNotificationButtons = notificationModalWindow.querySelectorAll('.hide-notification-button');
+    let acceptButtons = notificationModalWindow.querySelectorAll('.answer-buttons__accept-button');
+    let rejectButtons = notificationModalWindow.querySelectorAll('.answer-buttons__reject-button');
+
+    hideNotificationButtons.forEach((button) => button.addEventListener('click', hideNotification));
+    acceptButtons.forEach((button) => button.addEventListener('click', acceptFriendRequest));
+    rejectButtons.forEach((button) => button.addEventListener('click', hideNotification));
+
+    window.onkeyup = (event) => controlVisibilityOfModalWindows(event, notificationModalWindow);
+    modalBackground.style.display = 'block';
+    notificationModalWindow.style.display = 'grid';
+}
+
+function sendNotification() {
+    let recipient;
+    let notificationType = this.getAttribute('n-type');
+    let csrfToken = document.querySelector('input[name="csrfmiddlewaretoken"]').value;
+    let data = new FormData();
+    let xhr = new XMLHttpRequest();
+
+    xhr.open('POST', '/notification/');
+
+    if (notificationType == 'FriendRequest' || notificationType == 'Unfriending') {
+        let button = this;
+        recipient = button.parentElement.querySelector('.search-result-item__item-email').textContent;
+
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState == 4 && xhr.status == 200) {
+                button.parentElement.remove();
+            }
+        }
+    } else if (notificationType == 'FriendRequestAccepted') {
+        recipient = this.getAttribute('n-recipient');
+        let acceptButton = this.querySelector('.answer-buttons__accept-button');
+
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState == 4 && xhr.status == 200) {
+                hideNotification.call(acceptButton);
+            }
+        }
+    } else if (notificationType == 'SetProjectCoworker' || notificationType == 'DeleteProjectCoworker' || notificationType == 'AddProjectCoworker') {
+        recipient = this.textContent;
+        let project = this.closest('.project-modal-window__form').elements['project-name'].value;
+
+        data.set('project', project);
+    } else if (notificationType == 'SetTaskExecutor' || notificationType == 'DeleteTaskExecutor' || notificationType == 'AddTaskExecutor' || notificationType == 'DeadlineOver' || notificationType == 'DeadlineApproaching') {
+        recipient = this.textContent;
+        let form = this.closest('.task-modal-window__form');
+        let project = form.elements['task-project'].value;
+        let task = form.elements['task-name'].value;
+
+        data.set('project', project);
+        data.set('task', task);
+    }
+
+    data.set('r-type', 'send-notification');
+    data.set('type', notificationType);
+    data.set('recipient', recipient);
+    data.set("csrfmiddlewaretoken", csrfToken);
+    xhr.send(data);
+}
+
+function deleteFriend() {
+    let button = this;
+    let friendEmail = button.parentElement.querySelector('.search-result-item__item-email').textContent;
+    let csrfToken = document.querySelector('input[name="csrfmiddlewaretoken"]').value;
+    let data = new FormData();
+    let xhr = new XMLHttpRequest();
+
+    xhr.open('POST', '/workspace/');
+    data.set('delete-friend', 'True');
+    data.set('csrfmiddlewaretoken', csrfToken);
+    data.set('friend-email', friendEmail);
+
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState == 4 && xhr.status == 200) {
+            button.parentElement.remove();
+        }
+    }
+
+    xhr.send(data);
+}
+
+function checkTaskDeadline() {
+    let currentDate = new Date(Date.now());
+    let taskDeadline = new Date(this.closest('.task-modal-window__form').querySelector('#task-deadline').value);
+    let dateDelta = taskDeadline.getTime() - currentDate.getTime();  // Разницу между датами получаем в миллисекундах
+
+    if (dateDelta < -8.67e+7) {  // Дата выполнения задачи уже прошла
+        this.setAttribute('n-type', 'DeadlineOver');
+        sendNotification.call(this);
+    } else if (-8.67e+7 >= dateDelta <= 8.67e+7) {  // Разница между датами от 0 до 1 дня
+        this.setAttribute('n-type', 'DeadlineApproaching');
+        sendNotification.call(this);
+    }
 }
 
 
@@ -747,3 +980,6 @@ getExecutorsByProject.call(taskProjectField);
 
 let searchButton = document.querySelector('.user-function-icons__search-icon');
 searchButton.addEventListener('click', showSearchModalWindow);
+
+let notificationButton = document.querySelector('.user-function-icons__notification-icon');
+notificationButton.addEventListener('click', showNotifications);

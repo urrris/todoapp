@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Рабочее пространство</title>
+    <link rel="icon" href="{% static 'img/logo.svg' %}" type="image/icon type">
     <link rel="stylesheet" href="{% static 'css/normalize.css' %}">
     <link rel="stylesheet" href="{% static 'css/workspace-base.css' %}">
     {% if theme %}
@@ -147,7 +148,7 @@
     </aside>
 
     <header class="header">
-        <div class="header__current-project-name">Default project name</div>
+        <div class="header__current-project-name"></div>
         <div class="header__user-function-icons">
             <a class="user-function-icons__search-icon">
                 {% if theme %}
@@ -157,10 +158,18 @@
                 {% endif %}
             </a>
             <a class="user-function-icons__notification-icon">
-                {% if theme %}
-                    <img src="{% static 'img/workspace/notification-light.svg' %}" alt="The bell">
+                {% if notifications %}
+                    {% if theme %}
+                    <img src="{% static 'img/workspace/notification_active-light.svg' %}" alt="The bell">
+                    {% else %}
+                    <img src="{% static 'img/workspace/notification_active.svg' %}" alt="The bell">
+                    {% endif %}
                 {% else %}
+                    {% if theme %}
+                    <img src="{% static 'img/workspace/notification-light.svg' %}" alt="The bell">
+                    {% else %}
                     <img src="{% static 'img/workspace/notification.svg' %}" alt="The bell">
+                    {% endif %}
                 {% endif %}
             </a>
             <a class="user-function-icons__user-profile-icon">
@@ -322,6 +331,99 @@
                     <input type="text" name="search-field" id="search-field" placeholder="Введите имя или почту пользователя">
                 </div>
                 <ul class="search-modal-window__search-results"></ul>
+            </div>
+
+            <div class="notification-modal-window">
+                <div class="form-title">
+                    <span>Уведомления</span>
+                    <a class="close-modal-window-button">
+                        {% if theme %}
+                        <img src="{% static 'img/workspace/close-icon-light.svg' %}" alt="x">
+                        {% else %}
+                        <img src="{% static 'img/workspace/close-icon.svg' %}" alt="x">
+                        {% endif %}
+                    </a>
+                </div>
+                <div class="notification-modal-window__notifications-list">
+                    {% for notification in notifications %}
+                        <div class="notifications-list__notification">
+                            <span n-id="{{ notification.id }}" style="display: none;"></span>
+                            <div class="notification__title">
+                                {% if notification.type == 'FriendRequest' %}
+                                    <span>Запрос в друзья</span>
+                                {% elif notification.type == 'FriendRequestAccepted' %}
+                                    <span>Запрос в друзья был принят!</span>
+                                {% elif notification.type == 'Unfriending' %}
+                                    <span>Удаление из друзей</span>
+                                {% elif notification.type == 'SetProjectCoworker' %}
+                                    <span>Прикрепление к новому проекту</span>
+                                {% elif notification.type == 'DeleteProjectCoworker' %}
+                                    <span>Удаление из состава сотрудников проекта</span>
+                                {% elif notification.type == 'AddProjectCoworker' %}
+                                    <span>Добавление в состав сотрудников проекта</span>
+                                {% elif notification.type == 'SetTaskExecutor' %}
+                                    <span>Прикрепление к новой задаче</span>
+                                {% elif notification.type == 'DeleteTaskExecutor' %}
+                                    <span>Удаление из списка исполнителей задачи</span>
+                                {% elif notification.type == 'AddTaskExecutor' %}
+                                    <span>Добавление в список исполнителей задачи</span>
+                                {% elif notification.type == 'DeadlineApproaching' %}
+                                    <span>Срок выполнения задачи подходит к концу!</span>
+                                {% elif notification.type == 'DeadlineOver' %}
+                                    <span>Срок выполнения задачи истёк!</span>
+                                {% endif %}
+                                    <a class="hide-notification-button">
+                                        {% if theme %}
+                                        <img src="{% static 'img/workspace/close-icon-light.svg' %}" alt="x">
+                                        {% else %}
+                                        <img src="{% static 'img/workspace/close-icon.svg' %}" alt="x">
+                                        {% endif %}
+                                    </a>
+                            </div>
+                            {% if notification.type == 'FriendRequest' %}
+                                <div class="notification__description">
+                                    <span class="notification__message">Вам был отправлен запрос дружбы от пользователя <b>{{ notification.sender.email }}</b>!</span>
+                                    <div class="notification__answer-buttons">
+                                        <a class="answer-buttons__accept-button">
+                                            {% if theme %}
+                                            <img src="{% static 'img/workspace/accept-light.svg' %}" alt="Accept the request">
+                                            {% else %}
+                                            <img src="{% static 'img/workspace/accept.svg' %}" alt="Accept the request">
+                                            {% endif %}
+                                        </a>
+                                        <a class="answer-buttons__reject-button">
+                                            {% if theme %}
+                                            <img src="{% static 'img/workspace/reject-light.svg' %}" alt="Reject the request">
+                                            {% else %}
+                                            <img src="{% static 'img/workspace/reject.svg' %}" alt="Reject the request">
+                                            {% endif %}
+                                        </a>
+                                    </div>
+                                </div>
+                            {% elif notification.type == 'FriendRequestAccepted' %}
+                                <span class="notification__message">Пользователь <b>{{ notification.sender.email }}</b> принял Ваш запрос дружбы!</span>
+                            {% elif notification.type == 'Unfriending' %}
+                                <span class="notification__message">Пользователь <b>{{ notification.sender.email }}</b> удалил Вас из своего списка друзей.</span>
+                            {% elif notification.type == 'SetProjectCoworker' %}
+                                <span class="notification__message">Ваш друг, <b>{{ notification.sender.email }}</b>, создал новый проект <b>{{notification.project }}</b> и указал Вас, как одного из его сотрдуников.</span>
+                            {% elif notification.type == 'DeleteProjectCoworker' %}
+                                <span class="notification__message">Вы были удалены из состава сотрудников проекта <b>{{ notification.project }}</b>, созданного вашим другом <b>{{ notification.sender.email }}</b>.</span>
+                            {% elif notification.type == 'AddProjectCoworker' %}
+                                <span class="notification__message">Вы были добавлены в состав сотрудников проекта <b>{{ notification.project }}</b>, созданного вашим другом <b>{{ notification.sender.email }}</b>.</span>
+                            {% elif notification.type == 'SetTaskExecutor' %}
+                                <span class="notification__message">Один из сотрудников проекта <b>{{ notification.project }}</b>, <b>{{ notification.sender.email }}</b>, создал новую задачу <b>{{ notification.task }}</b> и указал Вас, как одного из её исполнителей.</span>
+                            {% elif notification.type == 'DeleteTaskExecutor' %}
+                                <span class="notification__message">Вы были удалены из списка исполниетелей задачи <b>{{ notification.task }}</b> проекта <b>{{ notification.project }}</b> одним из его сотрудников, <b>{{ notification.sender.email }}</b>.</span>
+                            {% elif notification.type == 'AddTaskExecutor' %}
+                                <span class="notification__message">Вы были добавлены в список исполнителей задачи <b>{{ notification.task }}</b> проекта <b>{{ notification.project }}</b> одним из его сотрудников, <b>{{ notification.sender.email }}</b>.</span>
+                            {% elif notification.type == 'DeadlineApproaching' %}
+                                <span class="notification__message">Срок выполнения задачи <b>{{ notification.task }}</b> проекта <b>{{ notification.project }}</b> подходит к концу! Советуем обратить на это внимание, чтобы успеть завершить всё вовремя!</span>
+                            {% elif notification.type == 'DeadlineOver' %}
+                                <span class="notification__message">Срок выполнения задачи <b>{{ notification.task }}</b> проекта <b>{{ notification.project }}</b> истёк! Советуем обратить на это внимание, чтобы подвести итоги выполнения задачи или перенести срок её выполнения!</span>
+                                {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
             </div>
         </div>
     </main>

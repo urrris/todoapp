@@ -212,13 +212,14 @@ a {
 #modal-background>div[class$='modal-window'] {
     margin: 30vh 30vw;
     min-width: 40vw;
-    min-height: 30vh;
+    max-height: 50vh;
     display: none;
     padding: 2rem;
     grid-template-columns: repeat(2, 1fr);
     row-gap: 2rem;
     font-size: 1.6rem;
     border-radius: 1.8rem;
+    overflow: auto;
 }
 
 .form-title {
@@ -406,3 +407,57 @@ textarea {
 .search-result-item__control-item-button:hover {
     cursor: pointer;
 }
+
+.notification-modal-window__notifications-list {
+    grid-column: span 2;
+    display: flex;
+    flex-direction: column;
+    row-gap: 3rem;
+}
+
+.notifications-list__notification {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    row-gap: 1.5rem;
+    border-radius: 1.8rem;
+    transition: background-color 0.5s linear;
+}
+
+.notification__title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 2rem;
+    font-weight: 700;
+}
+
+.notification__title img {
+    width: 2rem;
+    height: 2rem;
+}
+
+.notification__description {
+    display: flex;
+    align-items: center;
+}
+
+.notification__message {
+    flex-basis: 90%;
+}
+
+.notification__answer-buttons {
+    flex-basis: 10%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.notification__answer-buttons > div {
+    border-radius: 1rem;
+}
+
+.notification__answer-buttons img {
+    width: 1.6rem;
+    height: 1.6rem;
+} 

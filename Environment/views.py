@@ -1,9 +1,11 @@
-from datetime import timedelta
-from django.http import HttpRequest, JsonResponse
+from datetime import timedelta, date
+from django.db.models import Q
+from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import render, redirect
 from django.views import View
 from re import fullmatch
-from .models import User, Project, Task
+from urllib import parse
+from .models import User, Project, Task, Notification
 
 
 class RegisterView(View):
@@ -80,6 +82,7 @@ class LoginView(View):
             request.session['login'] = True
             request.session['__user-email'] = email
             request.session.set_expiry(timedelta(days=1))
+            check_tasks_deadline(request)
             return redirect('/workspace')
         except:
             form_fields['hint'] = 'Адрес электронной почты или пароль введены некорректно.'
@@ -96,8 +99,8 @@ class WorkspaceView(View):
         # Обновление срока действия пользовательской сессии
         request.session.set_expiry(timedelta(days=1))
         user = User.objects.get(email=request.session.get('__user-email'))
-        context = {"own_projects": user.own_projects.all(), 'other_projects': user.other_projects.all(),
-                   'friends': user.friends.all(), 'theme': user.theme, 'email': user.email, 'photo': user.photo.url}
+        context = {'own_projects': user.own_projects.all(), 'other_projects': user.other_projects.all(), 'friends': user.friends.all(),
+                   'notifications': user.notifications.all(), 'theme': user.theme, 'email': user.email, 'photo': user.photo.url}
         return render(request, 'environment/user/workspace.html', context=context)
 
     def post(self, request: HttpRequest):
@@ -106,7 +109,7 @@ class WorkspaceView(View):
         if len(data.keys()) == 1:  # Выход из аккаунта пользователя
             request.session.set_expiry(timedelta(microseconds=1))
             return redirect('login')
-        else:  # Отправка данных различных форм
+        else:  # Отправка данных различных форм; изменение состояния объектов, зависимых от пользователя
             email = request.session['__user-email']
             user = User.objects.get(email=email)
 
@@ -115,6 +118,7 @@ class WorkspaceView(View):
 
                 try:
                     user.own_projects.get(title=project_name)
+                    return HttpResponse('The project to be created already exists', status=400)
                 except:
                     project_coworkers = data.getlist('project-coworkers', ())
                     coworkers_profiles = [User.objects.get(
@@ -140,10 +144,19 @@ class WorkspaceView(View):
                         task.executors.remove(executor)
                 project.coworkers.set(coworkers_profiles)
                 project.save()
+            elif data.get('delete-project', False):  # Удаление проекта
+                project_name = data.get('project-name')
+                email = request.session['__user-email']
+
+                user = User.objects.get(email=email)
+                project = user.own_projects.get(title=project_name)
+                project.delete()
+
+                return JsonResponse({})
             elif data.get('create-task', False):  # Форма для создания новой задачи
                 task_name = data.get('task-name')
                 task_project = data.get('task-project')
-                task_project_type = request.headers.get('Project-Type')
+                task_project_type = data.get('project-type')
 
                 if (task_project_type == 'own'):
                     user_projects = user.own_projects
@@ -154,6 +167,7 @@ class WorkspaceView(View):
 
                 try:
                     project_tasks.get(title=task_name)
+                    return HttpResponse('The task to be created already exists', status=400)
                 except:
                     task_description = data.get('task-description', '')
                     task_executors = data.getlist('task-executors', ())
@@ -170,10 +184,10 @@ class WorkspaceView(View):
             elif data.get('edit-task', False):  # Форма для редактирования существующей задачи
                 old_task_name = data.get('old-task-name')
                 old_project_name = data.get('old-project-name')
-                old_project_type = request.headers.get('Old-Project-Type')
+                old_project_type = data.get('old-project-type')
                 new_task_name = data.get('task-name')
                 new_project_name = data.get('task-project')
-                new_project_type = request.headers.get('Project-Type')
+                new_project_type = data.get('project-type')
                 task_description = data.get('task-description', '')
                 task_executors = data.getlist('task-executors', ())
                 task_deadline = data.get('task-deadline')
@@ -200,14 +214,114 @@ class WorkspaceView(View):
                     task.project = user_projects[new_project_type].get(
                         title=new_project_name)
                 task.save()
+            elif data.get('delete-task', False):  # Удаление задачи
+                task_name = data.get('task-name')
+                project_name = data.get('project-name')
+                project_type = data.get('project-type')
+                email = request.session['__user-email']
+                user = User.objects.get(email=email)
+
+                if (project_type == 'own'):
+                    user_projects = user.own_projects.all()
+                else:
+                    user_projects = user.other_projects.all()
+
+                project = user_projects.get(title=project_name)
+                task = project.tasks.get(title=task_name)
+                task.delete()
+
+                return JsonResponse({})
+            elif data.get('change-theme', False):  # Изменение темы пользовательского интерфейса
+                theme = eval(data.get('theme'))
+                email = request.session['__user-email']
+
+                user = User.objects.get(email=email)
+                user.theme = theme
+                user.save()
+
+                return JsonResponse({})
+            elif data.get('accept-friend-request', False):  # Принятие запроса дружбы
+                notification_id = data.get('n-id')
+                email = request.session.get('__user-email')
+                user = User.objects.get(email=email)
+
+                notification = user.notifications.get(id=notification_id)
+                user.friends.add(notification.sender)
+
+                return JsonResponse({'sender': notification.sender.email})
+            elif data.get('delete-friend', False):  # Удаление пользователя из друзей
+                friend_email = data.get('friend-email')
+                friend = User.objects.get(email=friend_email)
+                email = request.session.get('__user-email')
+                user = User.objects.get(email=email)
+
+                user.friends.remove(friend)
+                user.save()
+
+                # При удалении определённого пользователя из друзей - удаляем его из сотрудников и исполнителей задач проекта
+                for project in user.own_projects.all():
+                    try:
+                        project.coworkers.remove(friend)
+                        project.save()
+                    except:
+                        pass
+                    else:
+                        for task in project.tasks.all():
+                            try:
+                                task.executors.remove(friend)
+                                task.save()
+                            except:
+                                pass
+
+                return JsonResponse({})
 
             return redirect('workspace')
+
+
+class NotificationView(View):
+    """Класс представления пользовательских уведомлений."""
+
+    def get(self, request: HttpRequest):
+        pass
+
+    def post(self, request: HttpRequest):
+        data = request.POST
+        request_type = data.get('r-type', '')
+
+        if request_type == 'send-notification':
+            n_type = data.get('type')
+            n_recipient = User.objects.get(email=data.get('recipient'))
+            n_sender = User.objects.get(email=request.session.get('__user-email'))
+
+            notification = Notification(recipient=n_recipient, sender=n_sender, type=n_type)
+
+            # ('SetProjectCoworker', 'DeleteProjectCoworker', 'AddProjectCoworker', 'SetTaskExecutor', 'DeleteTaskExecutor', 'AddTaskExecutor', 'DeadlineOver', 'DeadlineApproaching')
+            if (n_type not in {'FriendRequest', 'Unfriending', 'FriendRequestAccepted'}):
+                n_project = data.get('project')
+                notification.project = n_project
+                # ('DeadlineOver', 'DeadlineApproaching')
+                if (n_type not in {'SetProjectCoworker', 'DeleteProjectCoworker', 'AddProjectCoworker'}):
+                    n_task = data.get('task')
+                    notification.task = n_task
+
+            notification.save()
+        elif request_type == 'hide-notification':
+            notification_id = data.get('n-id')
+            email = request.session.get('__user-email')
+            user = User.objects.get(email=email)
+
+            notification = user.notifications.get(id=notification_id)
+            notification.delete()
+
+        return JsonResponse({})
 
 
 def get_tasks(request: HttpRequest):
     """Возвращает список задач, принадлежащих конкретному проекту."""
     project_name = request.headers.get('Project-Name')
+    project_name = parse.unquote(project_name)
     project_type = request.headers.get('Project-Type')
+    project_type = parse.unquote(project_type)
     email = request.session['__user-email']
     user = User.objects.get(email=email)
 
@@ -216,29 +330,19 @@ def get_tasks(request: HttpRequest):
     else:
         user_projects = user.other_projects
 
-    tasks = user_projects.get(title=project_name).tasks.all()
-    data = {'tasks': list(
-        map(lambda t: (t.title, t.status), tasks)), 'theme': user.theme}
+    # Отбираем только те задачи, одним из исполнетелей которых является пользователь
+    tasks = [(t.title, t.status) for t in user_projects.get(title=project_name).tasks.all() if t.executors.contains(user)]
+    data = {'tasks': tasks, 'theme': user.theme}
 
     return JsonResponse(data)
-
-
-def change_theme(request: HttpRequest):
-    """Устанавливает тему пользовательского интерфейса."""
-    theme = eval(request.headers.get('Theme'))
-    email = request.session['__user-email']
-
-    user = User.objects.get(email=email)
-    user.theme = theme
-    user.save()
-
-    return JsonResponse({})
 
 
 def get_project_info(request: HttpRequest):
     """Возвращает информацию о конкретном проекте."""
     project_name = request.headers.get('Project-Name')
+    project_name = parse.unquote(project_name)
     project_type = request.headers.get('Project-Type')
+    project_type = parse.unquote(project_type)
     email = request.session['__user-email']
     user = User.objects.get(email=email)
 
@@ -249,31 +353,23 @@ def get_project_info(request: HttpRequest):
 
     project = user_projects.get(title=project_name)
     user_friends = set(user.friends.all())
-    # Сравнение с user в последующих 2-х строках необходимо для отображения списка коллег по проекту по отношению к текущему пользователю
-    active_coworkers = {
-        c.email: True for c in project.coworkers.all() if c != user}
+    # Сравнение с user в последующих 3-х строках необходимо для отображения списка коллег по проекту по отношению к текущему пользователю
+    active_coworkers = {c.email: True for c in project.coworkers.all() if c != user}
     coworkers = {c.email: False for c in user_friends if c != user}
     coworkers.update(active_coworkers)
+    if project.creator != user:
+        coworkers[project.creator.email] = True
     data = {'coworkers': coworkers}
 
     return JsonResponse(data)
 
 
-def delete_project(request: HttpRequest):
-    project_name = request.headers.get('Project-Name')
-    email = request.session['__user-email']
-
-    user = User.objects.get(email=email)
-    project = user.own_projects.get(title=project_name)
-    project.delete()
-
-    return JsonResponse({})
-
-
 def get_task_executors(request: HttpRequest):
     """Возвращает список возможных исполнителей задачи при её создании."""
     project_name = request.headers.get('Project-Name')
+    project_name = parse.unquote(project_name)
     project_type = request.headers.get('Project-Type')
+    project_type = parse.unquote(project_type)
     email = request.session['__user-email']
     user = User.objects.get(email=email)
 
@@ -295,8 +391,11 @@ def get_task_executors(request: HttpRequest):
 def get_task_info(request: HttpRequest):
     """Возвращает информацию о конкретной задаче."""
     project_name = request.headers.get('Project-Name')
+    project_name = parse.unquote(project_name)
     project_type = request.headers.get('Project-Type')
+    project_type = parse.unquote(project_type)
     task_name = request.headers.get('Task-Name')
+    task_name = parse.unquote(task_name)
     email = request.session['__user-email']
     user = User.objects.get(email=email)
 
@@ -307,43 +406,61 @@ def get_task_info(request: HttpRequest):
 
     project = user_projects.get(title=project_name)
     task = project.tasks.get(title=task_name)
-    executors = {e.email: 0 for e in project.coworkers.all()}
-    active_executors = {e.email: 1 for e in task.executors.all()}
+    executors = {e.email: False for e in project.coworkers.all()}
+    active_executors = {e.email: True for e in task.executors.all()}
     executors.update(active_executors)
+    executors[project.creator.email] = executors.get(project.creator.email, False)
     data = {'description': task.description, 'executors': executors,
             'deadline': task.deadline, 'priority': task.priority, 'status': task.status}
 
     return JsonResponse(data)
 
 
-def delete_task(request: HttpRequest):
-    task_name = request.headers.get('Task-Name')
-    project_name = request.headers.get('Project-Name')
-    project_type = request.headers.get('Project-Type')
-    email = request.session['__user-email']
-    user = User.objects.get(email=email)
-
-    if (project_type == 'own'):
-        user_projects = user.own_projects.all()
-    else:
-        user_projects = user.other_projects.all()
-
-    project = user_projects.get(title=project_name)
-    task = project.tasks.get(title=task_name)
-    task.delete()
-
-    return JsonResponse({})
-
-
 def search_for_users(request: HttpRequest):
     data = request.headers.get('Data')
+    data = parse.unquote(data)
     email = request.session.get('__user-email')
     user = User.objects.get(email=email)
 
     users = User.objects.filter(email__icontains=data)
     users = users.union(User.objects.filter(username__icontains=data))
-    result = {'theme': user.theme}
-    result['users'] = {u.email: (u.username, u.photo.url, False) for u in users if u != user and not(user.friends.contains(u))}
-    result['users'].update({u.email: (u.username, u.photo.url, True) for u in users if user.friends.contains(u)})
+    result = {'theme': user.theme, 'users': {}}
+    for u in users:
+        if u == user:
+            continue
+        else:
+            try:
+                # Запрос дружбы к пользователю уже был отправлен
+                u.notifications.get(Q(sender=user) & Q(type='FriendRequest'))
+            except:
+                if user.friends.contains(u):
+                    result['users'][u.email] = (u.username, u.photo.url, True)
+                else:
+                    result['users'][u.email] = (u.username, u.photo.url, False)
 
     return JsonResponse(data=result)
+
+
+def check_tasks_deadline(request: HttpRequest):
+    email = request.session.get('__user-email')
+    user = User.objects.get(email=email)
+    today = date.today()
+
+    for task in user.tasks.all():
+        deadline = task.deadline - today
+        if deadline.days < 0:
+            notification = Notification(recipient=user, sender=user, type='DeadlineOver',
+                                        project=task.project.title, task=task.title)
+        elif deadline <= timedelta(days=1):
+            notification = Notification(recipient=user, sender=user, type='DeadlineApproaching',
+                                        project=task.project.title, task=task.title)
+        notification.save()
+
+        try:
+            # Уведомление уже было отправлено ранее
+            user.notifications.get(Q(type__startswith='Deadline') & Q(
+                project=notification.project) & Q(task=notification.task))
+        except:
+            notification.delete()
+
+    return JsonResponse({})
