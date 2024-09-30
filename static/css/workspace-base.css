@@ -15,6 +15,7 @@ html {
 
 a {
     cursor: pointer;
+    text-decoration: none;
     text-decoration-color: currentColor;
 }
 
@@ -39,8 +40,14 @@ a {
     display: flex;
     flex-direction: column;
     overflow: auto;
+    scrollbar-width: 0;
     row-gap: 3rem;
     font-size: 1.6rem;
+}
+
+.aside__workspace::-webkit-scrollbar {
+    width: 0;
+    height: 0;
 }
 
 .block-title:not(:has(> label)),
@@ -220,6 +227,12 @@ a {
     font-size: 1.6rem;
     border-radius: 1.8rem;
     overflow: auto;
+    scrollbar-width: 0;
+}
+
+#modal-background>div[class$='modal-window']::-webkit-scrollbar {
+    width: 0;
+    height: 0;
 }
 
 .form-title {
@@ -280,13 +293,14 @@ a {
 
 *[id^='project'],
 *[id^='task'],
-*[id^='search'] {
+*[id^='search'],
+*[class^='user-info'] input {
     border: 1px solid #ddd;
     border-radius: 0.5rem;
     padding: 0.5rem;
 }
 
-.project-modal-window__form > div {
+.project-modal-window__form>div {
     grid-column: span 4;
     display: flex;
     flex-direction: column;
@@ -319,7 +333,7 @@ input[class$='__delete-button'] {
     min-height: 80vh !important;
 }
 
-.task-modal-window__form > div {
+.task-modal-window__form>div {
     display: flex;
     flex-direction: column;
     row-gap: 2rem;
@@ -330,8 +344,8 @@ input[class$='__delete-button'] {
     grid-column: span 3;
 }
 
-.task-modal-window__main-fields > div,
-.task-modal-window__secondary-fields > div {
+.task-modal-window__main-fields>div,
+.task-modal-window__secondary-fields>div {
     width: 100%;
     display: flex;
     flex-direction: column;
@@ -363,6 +377,7 @@ textarea {
     flex-direction: column;
     row-gap: 2rem;
     overflow: auto;
+    scrollbar-width: 0;
     padding: 0;
 }
 
@@ -374,7 +389,7 @@ textarea {
     column-gap: 1rem;
 }
 
-.search-result-item__item-photo, 
+.search-result-item__item-photo,
 .search-result-item__control-item-button {
     grid-column: span 1;
     grid-row: 1 / span 2;
@@ -453,11 +468,194 @@ textarea {
     align-items: center;
 }
 
-.notification__answer-buttons > div {
+.notification__answer-buttons>div {
     border-radius: 1rem;
 }
 
 .notification__answer-buttons img {
     width: 1.6rem;
     height: 1.6rem;
-} 
+}
+
+.user-profile-modal-window {
+    max-height: 55vh !important;
+    margin: 25vh 30vw !important;
+}
+
+.user-profile-modal-window__form {
+    grid-column: span 2;
+    display: flex;
+    flex-direction: column;
+}
+
+.form__user-info {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: 1fr 0.5fr repeat(4, 0.5fr);
+    row-gap: 0.5rem;
+}
+
+.user-info__photo,
+.user-info__username-email {
+    grid-column: 2 / span 2;
+    grid-row: span 1;
+    align-self: center;
+    justify-self: center;
+}
+
+.user-info__photo img {
+    width: 10.8rem;
+    height: 10.8rem;
+    border-radius: 50%;
+}
+
+.user-info__username-email {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-weight: 500;
+    font-size: 2rem;
+}
+
+.user-info__change-photo-button {
+    grid-column: 2 / span 1;
+    grid-row: 3 / span 1;
+    align-self: center;
+    justify-self: center;
+}
+.user-info__change-photo-button:hover,
+.user-info__change-username-button:hover,
+.user-info__change-password-button:hover {
+    background-color: rgba(0, 140, 255, 0.75) !important;
+}
+#change-photo {
+    display: none;
+}
+.user-info__delete-photo-button {
+    grid-column: 3 / span 1;
+    grid-row: 3 / span 1;
+    align-self: center;
+    justify-self: center;
+    color: #dc4c3e !important;
+    font-weight: 600;
+    background-color: transparent !important;
+    border: 0.1rem solid #dc4c3e !important;
+}
+.user-info__delete-photo-button:hover {
+    background-color: #dc4c3e !important;
+    color: #fff !important;
+}
+
+.user-info__username,
+.user-info__password {
+    grid-column: span 4;
+    grid-row: span 1;
+    display: flex;
+    flex-direction: column;
+    row-gap: 0.5rem;
+    font-size: 1.8rem;
+    font-weight: 500;
+    margin-bottom: 1.5rem;
+}
+
+.user-info__username>*:first-child,
+.user-info__password>*:first-child {
+    font-weight: 600;
+}
+
+.form__user-info [class$='button'] {
+    width: max-content;
+    padding: 1rem;
+    color: #fff;
+    background-color: rgba(17, 17, 17, 0.25);
+    border: none;
+    border-radius: 1rem;
+    cursor: pointer;
+    transition-property: background, color;
+    transition-duration: 0.5s;
+    transition-timing-function: linear;
+}
+
+.form__user-friends {
+    display: flex;
+    flex-direction: column;
+    row-gap: 2rem;
+}
+
+.user-friends__title {
+    align-self: center;
+    font-size: 2.4rem;
+    font-weight: 500;
+}
+
+.form__user-friends-list {
+    list-style-type: none;
+    display: flex;
+    flex-direction: column;
+    row-gap: 1.5rem;
+}
+
+.user-friends__item {
+    display: grid;
+    grid-template-rows: repeat(2, 1fr);
+    grid-template-columns: repeat(10, 1fr);
+    row-gap: 1rem;
+    column-gap: 1rem;
+}
+
+.item__item-photo,
+.item__delete-item-button {
+    grid-column: span 1;
+    grid-row: 1 / span 2;
+    justify-self: center;
+    align-self: center;
+    width: 5rem;
+    height: 5rem;
+    border-radius: 50%;
+}
+
+.item__item-name {
+    font-size: 2rem;
+    font-weight: 700;
+    grid-column: span 8;
+}
+
+.item__item-email {
+    font-size: 1.5rem;
+    font-weight: 500;
+    grid-column: span 8;
+}
+
+.item__delete-item-button {
+    grid-column-start: 10;
+    width: 2.5rem !important;
+    height: 2.5rem !important;
+    border-radius: 0 !important;
+    cursor: pointer;
+}
+
+.form__logout {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+}
+
+.form__logout input {
+    grid-column: 2 / span 2;
+    margin-top: 2rem;
+    padding: 1rem;
+    font-weight: 600;
+    font-size: 2.2rem;
+    color: #dc4c3e;
+    text-align: center;
+    background-color: transparent;
+    border: 0.1rem solid #dc4c3e;
+    border-radius: 3.2rem;
+    cursor: pointer;
+    transition-property: background, color;
+    transition-duration: 0.5s;
+    transition-timing-function: linear;
+}
+.form__logout input:hover {
+    background-color: #dc4c3e;
+    color: #fff;
+}

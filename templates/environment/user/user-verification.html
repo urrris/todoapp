@@ -1,0 +1,47 @@
+{% load static %}
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="{% static 'img/logo.svg' %}" type="image/icon type">
+    <link rel="stylesheet" href="{% static 'css/normalize.css' %}">
+    <link rel="stylesheet" href="{% static 'css/user-verification.css' %}">
+    <title>Подтверждение созданной учётной записи</title>
+</head>
+
+<body>
+    <header class="header">
+        <div class="header__back-to-login-block">
+            <a href="{% url 'login' %}">
+                <img src="{% static 'img/register-login/arrow-left.svg' %}" alt="Arrow left">
+            </a>
+        </div>
+        <div class="header__decoration-block">
+            <img src="{% static 'img/register-login/circle.svg' %}" alt="Circle">
+        </div>
+    </header>
+
+    <main class="main">
+        <div class="main__block">
+            <div class="main__form-title">
+                <span>Подтверждение созданной учётной записи</span>
+            </div>
+
+            <form class="main__form" method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="main__input-email">
+                    <label for="email">* Введите код подтверждения</label>
+                    <input type="text" name="confirmation-code" id="confirmation-code">
+                </div>
+                <div class="main__show-password">
+                    <span colorized="{{ colorized }}">{{ hint }}</span>
+                </div>
+                <input class="main__submit-button" name="submit" type="submit" value="Подтвердить учётную запись">
+            </form>
+        </div>
+    </main>
+    <script type='module' src="{% static 'js/user-verification.js' %}"></script>
+</body>
+
+</html>

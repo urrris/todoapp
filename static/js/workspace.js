@@ -194,7 +194,15 @@ function searchForUsers(event) {
 
                 userPhoto = document.createElement('img');
                 userPhoto.className = 'search-result-item__item-photo';
-                userPhoto.setAttribute('src', response['users'][key][1]);
+                if (Boolean(response['users'][key][1])) {
+                    userPhoto.setAttribute('src', response['users'][key][1]);
+                } else {
+                    if (response['theme']) {
+                        userPhoto.setAttribute('src', '/static/img/workspace/user-profile-icon-light.svg');
+                    } else {
+                        userPhoto.setAttribute('src', '/static/img/workspace/user-profile-icon.svg');
+                    }
+                }
                 userPhoto.setAttribute('alt', '...');
 
                 userName = document.createElement('span');
@@ -233,7 +241,6 @@ function searchForUsers(event) {
                     addFriendButton.addEventListener('click', sendNotification);
                     li.appendChild(addFriendButton);
                 }
-
 
                 searchResultsBlock.appendChild(li);
             }
@@ -854,7 +861,7 @@ function sendNotification() {
 
     if (notificationType == 'FriendRequest' || notificationType == 'Unfriending') {
         let button = this;
-        recipient = button.parentElement.querySelector('.search-result-item__item-email').textContent;
+        recipient = button.parentElement.querySelector('*[class*="item__item-email"]').textContent;
 
         xhr.onreadystatechange = function () {
             if (xhr.readyState == 4 && xhr.status == 200) {
@@ -894,7 +901,7 @@ function sendNotification() {
 
 function deleteFriend() {
     let button = this;
-    let friendEmail = button.parentElement.querySelector('.search-result-item__item-email').textContent;
+    let friendEmail = button.parentElement.querySelector('*[class*="item__item-email"]').textContent;
     let csrfToken = document.querySelector('input[name="csrfmiddlewaretoken"]').value;
     let data = new FormData();
     let xhr = new XMLHttpRequest();
@@ -921,10 +928,79 @@ function checkTaskDeadline() {
     if (dateDelta < -8.67e+7) {  // Дата выполнения задачи уже прошла
         this.setAttribute('n-type', 'DeadlineOver');
         sendNotification.call(this);
-    } else if (-8.67e+7 >= dateDelta <= 8.67e+7) {  // Разница между датами от 0 до 1 дня
+    } else if ((-8.67e+7 >= dateDelta) && (dateDelta <= 8.67e+7)) {  // Разница между датами от 0 до 1 дня
         this.setAttribute('n-type', 'DeadlineApproaching');
         sendNotification.call(this);
     }
+}
+
+function showUserProfileModalWindow() {
+    let userProfileModalWindow = document.querySelector('.user-profile-modal-window');
+
+    window.onkeyup = (event) => controlVisibilityOfModalWindows(event, userProfileModalWindow);
+    modalBackground.style.display = 'block';
+    userProfileModalWindow.style.display = 'grid';
+}
+
+function changeUserPhoto() {
+    let changePhotoButton = this;
+    let csrfToken = document.querySelector('input[name="csrfmiddlewaretoken"]').value;
+    let data = new FormData();
+    let xhr = new XMLHttpRequest();
+
+    xhr.open('POST', '/workspace/');
+    data.set('change-user-photo', 'True');
+    data.set('csrfmiddlewaretoken', csrfToken);
+    data.set('photo', changePhotoButton.files[0]);
+
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState == 4 && xhr.status == 200) {
+            location.reload();
+        }
+    }
+
+    xhr.send(data);
+}
+
+function deleteUserPhoto() {
+    let csrfToken = document.querySelector('input[name="csrfmiddlewaretoken"]').value;
+    let data = new FormData();
+    let xhr = new XMLHttpRequest();
+
+    xhr.open('POST', '/workspace/');
+    data.set('delete-user-photo', 'True');
+    data.set('csrfmiddlewaretoken', csrfToken);
+
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState == 4 && xhr.status == 200) {
+            location.reload();
+        }
+    }
+
+    xhr.send(data);
+}
+
+function changeUsername() {
+    let usernameField = document.getElementById('change-username');
+    
+    if (usernameField.value == usernameField.getAttribute('old-username')) return;
+
+    let csrfToken = document.querySelector('input[name="csrfmiddlewaretoken"]').value;
+    let data = new FormData();
+    let xhr = new XMLHttpRequest();
+
+    xhr.open('POST', '/workspace/');
+    data.set('change-username', 'True');
+    data.set('csrfmiddlewaretoken', csrfToken);
+    data.set('username', usernameField.value);
+
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState == 4 && xhr.status == 200) {
+            location.reload();
+        }
+    }
+
+    xhr.send(data);
 }
 
 
@@ -983,3 +1059,21 @@ searchButton.addEventListener('click', showSearchModalWindow);
 
 let notificationButton = document.querySelector('.user-function-icons__notification-icon');
 notificationButton.addEventListener('click', showNotifications);
+
+let userProfileIcon = document.querySelector('.user-function-icons__user-profile-icon');
+userProfileIcon.addEventListener('click', showUserProfileModalWindow);
+
+let changePhotoButton = document.getElementById('change-photo');
+changePhotoButton.addEventListener('change', changeUserPhoto);
+
+let deletePhotoButton = document.querySelector('.user-info__delete-photo-button');
+deletePhotoButton.addEventListener('click', deleteUserPhoto);
+
+let changeUsernameButton = document.querySelector('.user-info__change-username-button');
+changeUsernameButton.addEventListener('click', changeUsername);
+
+let deleteFriendButtons = document.querySelectorAll('.user-friends__item > img.item__delete-item-button');
+for (let deleteFriendButton of deleteFriendButtons) {
+    deleteFriendButton.addEventListener('click', deleteFriend);
+    deleteFriendButton.addEventListener('click', sendNotification);
+}

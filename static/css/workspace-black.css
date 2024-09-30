@@ -51,7 +51,8 @@ html {
 
 *[id^='project'],
 *[id^='task'],
-*[id^='search'] {
+*[id^='search'],
+*[id^='change'] {
     background-color: #2A2B2F;
     color: #fff;
     font-weight: 600;

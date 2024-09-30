@@ -173,21 +173,24 @@
                 {% endif %}
             </a>
             <a class="user-function-icons__user-profile-icon">
-                <img src="{{ photo }}" alt="User's photo">
+                {% if photo %}
+                    <img src="{{ photo.url }}" alt="User's photo">
+                {% else %}
+                    {% if theme %}
+                    <img src="{% static 'img/workspace/user-profile-icon-light.svg' %}" alt="User's photo">
+                    {% else %}
+                    <img src="{% static 'img/workspace/user-profile-icon.svg' %}" alt="User's photo">
+                    {% endif %}
+                {% endif %}
             </a>
         </div>
     </header>
 
     <main class="main">
-        <form method="post">
-            {% csrf_token %}
-            <input type="submit" value="Выйти из аккаунта">
-        </form>
         <p style="font-size: 2rem;">{{ email }}</p>
         <div id="modal-background">
             <div class="create-smth-modal-window">
                 <div class="create-smth-modal-window__form-title form-title">
-                    <div></div>
                     <span>Создание</span>
                     <a class="close-modal-window-button">
                         {% if theme %}
@@ -371,6 +374,8 @@
                                     <span>Срок выполнения задачи подходит к концу!</span>
                                 {% elif notification.type == 'DeadlineOver' %}
                                     <span>Срок выполнения задачи истёк!</span>
+                                {% elif notification.type == 'EmailConfirmation' %}
+                                    <span>Необходимо подтверждение электронной почты!</span>
                                 {% endif %}
                                     <a class="hide-notification-button">
                                         {% if theme %}
@@ -420,9 +425,87 @@
                                 <span class="notification__message">Срок выполнения задачи <b>{{ notification.task }}</b> проекта <b>{{ notification.project }}</b> подходит к концу! Советуем обратить на это внимание, чтобы успеть завершить всё вовремя!</span>
                             {% elif notification.type == 'DeadlineOver' %}
                                 <span class="notification__message">Срок выполнения задачи <b>{{ notification.task }}</b> проекта <b>{{ notification.project }}</b> истёк! Советуем обратить на это внимание, чтобы подвести итоги выполнения задачи или перенести срок её выполнения!</span>
-                                {% endif %}
+                            {% elif notification.type == 'EmailConfirmation' %}
+                                <span class="notification__message">Просим Вас осуществить подтверждение указанной при регистрации электронной почты, введя специальный код, отправленный Вам на почту, в отдельном поле Вашего профиля!</span>  
+                            {% endif %}
                         </div>
                     {% endfor %}
+                </div>
+            </div>
+
+            <div class="user-profile-modal-window">
+                <div class="form-title">
+                    <span>Профиль</span>
+                    <a class="close-modal-window-button">
+                        {% if theme %}
+                        <img src="{% static 'img/workspace/close-icon-light.svg' %}" alt="x">
+                        {% else %}
+                        <img src="{% static 'img/workspace/close-icon.svg' %}" alt="x">
+                        {% endif %}
+                    </a>
+                </div>
+                <div class="user-profile-modal-window__form">
+                    <div class="form__user-info">
+                        <div class="user-info__photo">
+                            {% if photo %}
+                                <img src="{{ photo.url }}" alt="User's photo">
+                            {% else %}
+                                {% if theme %}
+                                    <img src="{% static 'img/workspace/user-profile-icon-light.svg' %}" alt="User's photo">
+                                {% else %}
+                                    <img src="{% static 'img/workspace/user-profile-icon.svg' %}" alt="User's photo">
+                                {% endif %}
+                            {% endif %}
+                        </div>
+                        <div class="user-info__username-email">
+                            <span>{{ username }}</span>
+                            <span>{{ email }}</span>
+                        </div>
+                        <label class="user-info__change-photo-button" for="change-photo">Изменить фото</label>
+                        <input type="file" name="change-photo" id="change-photo" accept=".png, .jpg, .jpeg">
+                        <a class="user-info__delete-photo-button">Удалить фото</a>
+                        <div class="user-info__username">
+                            <label for="username">Псевдоним</label>
+                            <input type="text" id="change-username" name="change-username" old-username="{{ username }}" placeholder="Введите новый псевдоним (от 5 до 50 символов)">
+                            <a class="user-info__change-username-button">Изменить псевдоним</a>
+                        </div>
+                        <div class="user-info__password">
+                            <label for="email">Пароль</label>
+                            <a href="{% url 'password-change' %}" class="user-info__change-password-button">Изменить пароль</a>
+                        </div>
+                    </div>
+                    <div class="form__user-friends">
+                        <span class="user-friends__title">Друзья</span>
+                        <ul class="form__user-friends-list">
+                            {% if not friends %}
+                                <li style="font-size: 2rem;">Друзей пока нет :(</li>
+                            {% endif %}
+                            {% for friend in friends %}
+                            <li class="user-friends__item">
+                                {% if friend.photo %}
+                                <img src="{{ friend.photo.url }}" class="item__item-photo">
+                                {% else %}
+                                {% if theme %}
+                                <img src="{% static 'img/workspace/user-profile-icon-light.svg' %}" class="item__item-photo">
+                                {% else %}
+                                <img src="{% static 'img/workspace/user-profile-icon.svg' %}" class="item__item-photo">
+                                {% endif %}
+                                {% endif %}
+                                <span class="item__item-name">{{ friend.username }}</span>
+                                <span class="item__item-email">{{ friend.email }}</span>
+                                {% if theme %}
+                                <img src="{% static 'img/workspace/delete-friend-light.png' %}" n-type="Unfriending" class="item__delete-item-button">
+                                {% else %}
+                                <img src="{% static 'img/workspace/delete-friend.svg' %}" n-type="Unfriending" class="item__delete-item-button">
+                                {% endif %}
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    <form class="form__logout" method="post">
+                        {% csrf_token %}
+                        <input type="submit" value="Выйти из аккаунта">
+                    </form>
                 </div>
             </div>
         </div>

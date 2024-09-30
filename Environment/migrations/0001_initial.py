@@ -29,9 +29,7 @@ class Migration(migrations.Migration):
                 ('username', models.CharField(max_length=50, verbose_name='Псевдоним')),
                 ('email', models.EmailField(max_length=254, primary_key=True, serialize=False,  verbose_name='E-mail')),
                 ('password', models.CharField(max_length=50, verbose_name='Пароль')),
-                ('height', models.IntegerField(default=0, verbose_name='Высота фото')),
-                ('width', models.IntegerField(default=0, verbose_name='Ширина фото')),
-                ('photo', models.ImageField(blank=True, height_field='height', upload_to='users/<django.db.models.fields.EmailField>/photos', verbose_name='Фото', width_field='width')),
+                ('photo', models.ImageField(blank=True, upload_to='users/<django.db.models.fields.EmailField>/photos', verbose_name='Фото')),
             ],
             options={
                 'verbose_name': 'Пользователь',

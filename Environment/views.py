@@ -1,4 +1,7 @@
+from cryptography.fernet import Fernet
 from datetime import timedelta, date
+from decouple import config
+from django.core.mail import send_mail
 from django.db.models import Q
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import render, redirect
@@ -52,9 +55,13 @@ class RegisterView(View):
             form_fields['hint'] = 'Данный аккаунт уже существует.'
             return render(request, 'environment/user/register.html', context=form_fields)
         except:
-            user = User(username=username, email=email,
-                        password=password, photo=photo)
+            if (photo == ''):
+                user = User(username=username, email=email, password=password)
+            else:
+                user = User(username=username, email=email,
+                            password=password, photo=photo)
             user.save()
+            send_confirmation_email(user)
             return redirect('/login')
 
 
@@ -78,12 +85,16 @@ class LoginView(View):
             return render(request, 'environment/user/login.html', context=form_fields)
 
         try:
-            User.objects.get(email=email, password=password)
-            request.session['login'] = True
+            user = User.objects.get(email=email, password=password)
             request.session['__user-email'] = email
             request.session.set_expiry(timedelta(days=1))
-            check_tasks_deadline(request)
-            return redirect('/workspace')
+            if not(user.email_confirmed):
+                request.session['__user-verification'] = True
+                return redirect('/user-verification')
+            else:
+                request.session['login'] = True
+                check_tasks_deadline(request)
+                return redirect('/workspace')
         except:
             form_fields['hint'] = 'Адрес электронной почты или пароль введены некорректно.'
             return render(request, 'environment/user/login.html', context=form_fields)
@@ -99,8 +110,16 @@ class WorkspaceView(View):
         # Обновление срока действия пользовательской сессии
         request.session.set_expiry(timedelta(days=1))
         user = User.objects.get(email=request.session.get('__user-email'))
-        context = {'own_projects': user.own_projects.all(), 'other_projects': user.other_projects.all(), 'friends': user.friends.all(),
-                   'notifications': user.notifications.all(), 'theme': user.theme, 'email': user.email, 'photo': user.photo.url}
+        context = {
+            'username': user.username,
+            'email': user.email,
+            'photo': user.photo,
+            'theme': user.theme,
+            'friends': user.friends.all(),
+            'notifications': user.notifications.all(),
+            'own_projects': user.own_projects.all(),
+            'other_projects': user.other_projects.all()
+        }
         return render(request, 'environment/user/workspace.html', context=context)
 
     def post(self, request: HttpRequest):
@@ -274,6 +293,34 @@ class WorkspaceView(View):
                                 pass
 
                 return JsonResponse({})
+            elif data.get('change-user-photo', False):
+                new_photo = request.FILES.get('photo')
+                email = request.session.get('__user-email')
+                user = User.objects.get(email=email)
+
+                user.photo = new_photo
+                user.save()
+
+                return JsonResponse({})
+            elif data.get('delete-user-photo', False):
+                email = request.session.get('__user-email')
+                user = User.objects.get(email=email)
+
+                user.photo = None
+                user.save()
+
+                return JsonResponse({})
+            elif data.get('change-username', False):
+                new_username = data.get('username')
+                if not(fullmatch(r'[a-zA-Z]\w{4,49}', new_username)):
+                    return JsonResponse({})
+                email = request.session.get('__user-email')
+                user = User.objects.get(email=email)
+
+                user.username = new_username
+                user.save()
+
+                return JsonResponse({})
 
             return redirect('workspace')
 
@@ -314,6 +361,140 @@ class NotificationView(View):
             notification.delete()
 
         return JsonResponse({})
+    
+
+class PasswordView(View):
+    def get(self, request: HttpRequest):
+        if not (request.session.get('login', False)):
+            return redirect('login')
+        
+        path = request.path_info
+        if (path == '/password-reset/'):
+            return render(request, 'environment/user/password-reset.html')
+        elif (path == '/password-reset-confirmation/'):
+            context = {'hint': 'Пароль должен содержать от 8 до 50 символов', 'colorized': 'false'}
+            return render(request, 'environment/user/password-reset-confirmation.html', context=context)
+        elif (path == '/password-change/'):
+            context = {'hint': 'Пароль должен содержать от 8 до 50 символов', 'colorized': 'false'}
+            return render(request, 'environment/user/password-change.html', context=context)
+    
+    def post(self, request: HttpRequest):
+        path = request.path_info
+        context = {'colorized': 'true'}
+        if (path == '/password-reset/'):
+            email = request.POST.get('email', '0')
+            try:
+                user = User.objects.get(email=email)
+                code = generate_confirmation_code()
+
+                user.confirmation_code = code
+                user.save()
+                send_mail(subject='Письмо для сброса пароля',
+                          message=f'''Здравствуйте!\n\nЧтобы сборсить пароль от аккаунта на TodoApp, перейдите по ссылке http://127.0.0.1:8000/password-reset-confirmation/ и введите следующий код подтверждения:\n{code}\n\nЕсли вы не запрашивали сброс пароля, просто проигнорируйте это сообщение.''',
+                          from_email=None,
+                          recipient_list=[email])
+                
+                request.session['__password-reset'] = True
+                request.session['__user-email'] = email
+                request.session.set_expiry(timedelta(minutes=10))
+                context['hint'] = 'Письмо с инструкциями для сброса пароля было отправлено на Ваш адрес электронной почты.'
+                context['colorized'] = 'false'
+                return render(request, 'environment/user/password-reset.html', context=context)
+            except:
+                context['hint'] = 'Пользователя с таким адресом электронной почты не существует.'
+                context['email'] = email
+                return render(request, 'environment/user/password-reset.html', context=context)
+            
+        elif (path == '/password-reset-confirmation/'):
+            if (request.session.get('__password-reset', False)):
+                code = request.POST.get('confirmation-code', False)
+                password = request.POST.get('password', False)
+                confirm_password = request.POST.get('confirm_password', False)
+
+                if not (all((code, password, confirm_password))):
+                    context['hint'] = 'Все поля, отмеченные *, должны быть заполнены.'
+                    return render(request, 'environment/user/password-reset-confirmation.html', context=context)
+
+                email = request.session['__user-email']                
+                user = User.objects.get(email=email)
+                if (user.confirmation_code == code):
+                    if (password != confirm_password):
+                        context['hint'] = 'Введённые пароли не совпадают.'
+                        return render(request, 'environment/user/password-reset-confirmation.html', context=context)
+                    if (not (fullmatch(r"""[\w~`=\-!@'"#№|$;%:&,<>/\\\^\?\*\(\)\[\]\{\}\+]{8,}""", password))):
+                        context['hint'] = 'Введённый пароль некорректен.'
+                        return render(request, 'environment/user/password-reset-confirmation.html', context=context)
+                    
+                    user.password = password
+                    user.confirmation_code = ''
+                    user.save()
+                    request.session.pop('__password-reset')
+                    return redirect('login')
+            
+            context['hint'] = 'Сброс пароля не удался.'
+            return render(request, 'environment/user/password-reset-confirmation.html', context=context)
+        
+        elif (path == '/password-change/'):
+            current_password = request.POST.get('current-password', False)
+            new_password = request.POST.get('password', False)
+            confirm_password = request.POST.get('confirm_password', False)
+
+            if not(all((current_password, new_password, confirm_password))):
+                context['hint'] = 'Все поля, отмеченные *, должны быть заполнены.'
+                return render(request, 'environment/user/password-change.html', context=context)
+            
+            email = request.session['__user-email']
+            user = User.objects.get(email=email)
+            if (user.password == current_password):
+                if (new_password != confirm_password):
+                    context['hint'] = 'Введённые новые пароли не совпадают.'
+                    return render(request, 'environment/user/password-change.html', context=context)
+                if (not (fullmatch(r"""[\w~`=\-!@'"#№|$;%:&,<>/\\\^\?\*\(\)\[\]\{\}\+]{8,}""", new_password))):
+                    context['hint'] = 'Введённый новый пароль некорректен.'
+                    return render(request, 'environment/user/password-change.html', context=context)
+
+                user.password = new_password
+                user.save()
+                request.session.set_expiry(timedelta(milliseconds=1))
+                return redirect('/login')
+            
+            context['hint'] = 'Сменить пароль не удалось.'
+            return render(request, 'environment/user/password-change.html', context=context)
+
+
+class UserView(View):
+    def get(self, request: HttpRequest):
+        context = {
+            'hint': '''На указанный при регистрации адрес электронной почты было отправлено письмо к кодом подтверждения учётной записи. 
+                       Просим Вас ввести его в поле выше.'''
+        }
+        return render(request, 'environment/user/user-verification.html', context=context)
+    
+    def post(self, request: HttpRequest):
+        context = {'colorized': 'true'}
+        if (request.session.get('__user-verification', False)):
+            code = request.POST.get('confirmation-code', False)
+
+            if not(code):
+                context['hint'] = 'Все поля, отмеченные *, должны быть заполнены.'
+                return render(request, 'environment/user/user-verification.html', context=context)
+            
+            email = request.session.get('__user-email')
+            user = User.objects.get(email=email)
+            if (user.confirmation_code == code):
+                user.email_confirmed = True
+                user.confirmation_code = ''
+                user.save()
+
+                request.session.pop('__user-verification')
+                request.session['login'] = True
+                request.session.set_expiry(timedelta(days=1))
+                check_tasks_deadline(request)
+
+                return redirect('/login')
+
+        context['hint'] = 'Подтвердить созданную учётную запись не удалось.'
+        return render(request, 'environment/user/user-verification.html', context=context)
 
 
 def get_tasks(request: HttpRequest):
@@ -433,10 +614,14 @@ def search_for_users(request: HttpRequest):
                 # Запрос дружбы к пользователю уже был отправлен
                 u.notifications.get(Q(sender=user) & Q(type='FriendRequest'))
             except:
+                try:
+                    photo = u.photo.url
+                except:
+                    photo = False
                 if user.friends.contains(u):
-                    result['users'][u.email] = (u.username, u.photo.url, True)
+                    result['users'][u.email] = (u.username, photo, True)
                 else:
-                    result['users'][u.email] = (u.username, u.photo.url, False)
+                    result['users'][u.email] = (u.username, photo, False)
 
     return JsonResponse(data=result)
 
@@ -449,18 +634,41 @@ def check_tasks_deadline(request: HttpRequest):
     for task in user.tasks.all():
         deadline = task.deadline - today
         if deadline.days < 0:
-            notification = Notification(recipient=user, sender=user, type='DeadlineOver',
-                                        project=task.project.title, task=task.title)
+            try:
+            # Уведомление уже было отправлено ранее
+                user.notifications.get(Q(type='DeadlineOver') & Q(
+                    project=notification.project) & Q(task=notification.task))
+            except:
+                notification = Notification(recipient=user, sender=user, type='DeadlineOver',
+                                            project=task.project.title, task=task.title)
         elif deadline <= timedelta(days=1):
-            notification = Notification(recipient=user, sender=user, type='DeadlineApproaching',
+            try:
+                # Уведомление уже было отправлено ранее
+                user.notifications.get(Q(type='DeadlineApproaching') & Q(
+                    project=notification.project) & Q(task=notification.task))
+            except:
+                notification = Notification(recipient=user, sender=user, type='DeadlineApproaching',
                                         project=task.project.title, task=task.title)
         notification.save()
 
-        try:
-            # Уведомление уже было отправлено ранее
-            user.notifications.get(Q(type__startswith='Deadline') & Q(
-                project=notification.project) & Q(task=notification.task))
-        except:
-            notification.delete()
+    return JsonResponse({})
+
+
+def generate_confirmation_code():
+    code = Fernet.generate_key()
+    code = str(code)
+    code = code[2:len(code)-2]
+    return code
+
+
+def send_confirmation_email(user: User):
+    code = generate_confirmation_code()
+
+    user.confirmation_code = code
+    user.save()
+    send_mail(subject='Подтверждение созданной учётной записи TodoApp',
+              message=f'Добро пожаловать, {user.username}! Просим Вас подтвердить свою учётную запись, перейдя по ссылке http://127.0.0.1:8000/user-verification/ и введя следующий код подтверждения:\n{code}\n',
+              from_email=None,
+              recipient_list=[user.email])
 
     return JsonResponse({})

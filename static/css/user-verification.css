@@ -1,0 +1,127 @@
+@import url('https://fonts.googleapis.com/css2?family=Exo+2&display=swap');
+/* regular */
+@import url('https://fonts.googleapis.com/css2?family=Exo+2:wght@500&display=swap');
+/* medium */
+@import url('https://fonts.googleapis.com/css2?family=Exo+2:wght@600&display=swap');
+/* semibold */
+@import url('https://fonts.googleapis.com/css2?family=Exo+2:wght@700&display=swap');
+/* bold */
+
+/* =============================================== GENERAL STYLES =============================================== */
+html {
+    font-family: 'Exo 2', sans-serif;
+    font-size: 10px;
+    color: #666666;
+    background-color: #fbfbfb;
+}
+
+.header,
+.main {
+    display: grid;
+    grid-template-columns: repeat(10, 1fr);
+}
+
+a {
+    text-decoration-color: #111;
+    color: #111;
+}
+
+input:not([type='checkbox']):not([type='submit']) {
+    border: 1px solid rgba(102, 102, 102, 0.35);
+    border-radius: 1.2rem;
+    display: block;
+    width: 100%;
+    height: 75%;
+    padding: 1.2rem 1rem;
+    cursor: text;
+    overflow: hidden;
+}
+
+/* =============================================== HEADER STYLES =============================================== */
+.header {
+    padding: 1.6rem 3.2rem;
+    border-bottom: 1px solid rgba(102, 102, 102, 0.25);
+}
+
+.header__back-to-login-block {
+    display: flex;
+    align-items: center;
+}
+
+.header__decoration-block {
+    grid-column: 5 / span 2;
+    display: flex;
+    justify-content: center;
+}
+
+.header__decoration-block img {
+    width: 4.8rem;
+    height: 4.8rem;
+}
+
+/* =============================================== MAIN STYLES =============================================== */
+.main {
+    grid-template-rows: repeat(7, 1fr);
+}
+
+.main__block {
+    grid-column: 4 / span 4;
+    grid-row: 2 / span 5;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: repeat(10, 1fr);
+    font-size: 1.6rem;
+}
+
+.main__form-title {
+    grid-column: 1 / span 4;
+    grid-row: 1 / span 2;
+    display: flex;
+    flex-direction: column;
+    row-gap: 1rem;
+    color: #333;
+}
+
+.main__form-title span:first-child {
+    font-size: 3.2rem;
+}
+
+.main__form {
+    grid-column: 1 / span 4;
+    grid-row: 3 / span 8;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: repeat(5, 1fr);
+    row-gap: 2.4rem;
+    column-gap: 1.6rem;
+}
+
+div[class^='main__input'],
+div[class^='main__show'] {
+    grid-column: span 4;
+    display: flex;
+    flex-direction: column;
+    row-gap: 1rem;
+}
+
+.main__show-password span[colorized='true'] {
+    color: rgba(255, 0, 0, 0.9);
+}
+
+.main__show-password input {
+    cursor: pointer;
+}
+
+.main__submit-button {
+    grid-column: 1 / span 4;
+    height: 65%;
+    background-color: rgba(17, 17, 17, 0.25);
+    color: #fff;
+    font-weight: 500;
+    font-size: 2.2rem;
+    text-align: center;
+    border: none !important;
+    border-radius: 3.2rem !important;
+    cursor: pointer !important;
+    transition: background-color 0.75s linear;
+}
